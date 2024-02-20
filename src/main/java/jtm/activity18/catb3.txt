@@ -1,0 +1,136 @@
+239   = Release Early, Release Often =
+240
+241   Early and frequent releases are a critical part of the Linux development model. Most developers
+242   (including me) used to believe this was bad policy for larger than trivial projects, because early
+243   versions are almost by definition buggy versions and you don't want to wear out the patience of your
+244   users.
+245
+246   This belief reinforced the general commitment to a cathedral-building style of development. If the
+247   overriding objective was for users to see as few bugs as possible, why then you'd only release a
+248   version every six months (or less often), and work like a dog on debugging between releases. The
+249   Emacs C core was developed this way. The Lisp library, in effect, was not—because there were active
+250   Lisp archives outside the FSF's control, where you could go to find new and development code
+251   versions independently of Emacs's release cycle [QR].
+252
+253   The most important of these, the Ohio State Emacs Lisp archive, anticipated the spirit and many of
+254   the features of today's big Linux archives. But few of us really thought very hard about what we
+255   were doing, or about what the very existence of that archive suggested about problems in the FSF's
+256   cathedral-building development model. I made one serious attempt around 1992 to get a lot of the
+257   Ohio code formally merged into the official Emacs Lisp library. I ran into political trouble and was
+258   largely unsuccessful.
+259
+260   But by a year later, as Linux became widely visible, it was clear that something different and much
+261   healthier was going on there. Linus's open development policy was the very opposite of
+262   cathedral-building. Linux's Internet archives were burgeoning, multiple distributions were being
+263   floated. And all of this was driven by an unheard-of frequency of core system releases.
+264
+265   Linus was treating his users as co-developers in the most effective possible way:
+266
+267       7. Release early. Release often. And listen to your customers.
+268
+269   Linus's innovation wasn't so much in doing quick-turnaround releases incorporating lots of user
+270   feedback (something like this had been Unix-world tradition for a long time), but in scaling it up
+271   to a level of intensity that matched the complexity of what he was developing. In those early times
+272   (around 1991) it wasn't unknown for him to release a new kernel more than once a day! Because he
+273   cultivated his base of co-developers and leveraged the Internet for collaboration harder than anyone
+274   else, this worked.
+275
+276   But how did it work? And was it something I could duplicate, or did it rely on some unique genius of
+277   Linus Torvalds?
+278
+279   I didn't think so. Granted, Linus is a damn fine hacker. How many of us could engineer an entire
+280   production-quality operating system kernel from scratch? But Linux didn't represent any awesome
+281   conceptual leap forward. Linus is not (or at least, not yet) an innovative genius of design in the
+282   way that, say, Richard Stallman or James Gosling (of NeWS and Java) are. Rather, Linus seems to me
+283   to be a genius of engineering and implementation, with a sixth sense for avoiding bugs and
+284   development dead-ends and a true knack for finding the minimum-effort path from point A to point B.
+285   Indeed, the whole design of Linux breathes this quality and mirrors Linus's essentially conservative
+286   and simplifying design approach.
+287
+288   So, if rapid releases and leveraging the Internet medium to the hilt were not accidents but integral
+289   parts of Linus's engineering-genius insight into the minimum-effort path, what was he maximizing?
+290   What was he cranking out of the machinery?
+291
+292   Put that way, the question answers itself. Linus was keeping his hacker/users constantly stimulated
+293   and rewarded—stimulated by the prospect of having an ego-satisfying piece of the action, rewarded by
+294   the sight of constant (even daily) improvement in their work.
+295
+296   Linus was directly aiming to maximize the number of person-hours thrown at debugging and
+297   development, even at the possible cost of instability in the code and user-base burnout if any
+298   serious bug proved intractable. Linus was behaving as though he believed something like this:
+299
+300       8. Given a large enough beta-tester and co-developer base, almost every problem will be
+301          characterized quickly and the fix obvious to someone.
+302
+303   Or, less formally, "Given enough eyeballs, all bugs are shallow." I dub this: "Linus's Law".
+304
+305   My original formulation was that every problem "will be transparent to somebody". Linus demurred
+306   that the person who understands and fixes the problem is not necessarily or even usually the person
+307   who first characterizes it. "Somebody finds the problem," he says, "and somebody else understands
+308   it. And I'll go on record as saying that finding it is the bigger challenge." That correction is
+309   important; we'll see how in the next section, when we examine the practice of debugging in more
+310   detail. But the key point is that both parts of the process (finding and fixing) tend to happen
+311   rapidly.
+312
+313   In Linus's Law, I think, lies the core difference underlying the cathedral-builder and bazaar
+314   styles. In the cathedral-builder view of programming, bugs and development problems are tricky,
+315   insidious, deep phenomena. It takes months of scrutiny by a dedicated few to develop confidence that
+316   you've winkled them all out. Thus the long release intervals, and the inevitable disappointment when
+317   long-awaited releases are not perfect.
+318
+319   In the bazaar view, on the other hand, you assume that bugs are generally shallow phenomena—or, at
+320   least, that they turn shallow pretty quickly when exposed to a thousand eager co-developers pounding
+321   on every single new release. Accordingly you release often in order to get more corrections, and as
+322   a beneficial side effect you have less to lose if an occasional botch gets out the door.
+323
+324   And that's it. That's enough. If "Linus's Law" is false, then any system as complex as the Linux
+325   kernel, being hacked over by as many hands as the that kernel was, should at some point have
+326   collapsed under the weight of unforseen bad interactions and undiscovered "deep" bugs. If it's true,
+327   on the other hand, it is sufficient to explain Linux's relative lack of bugginess and its continuous
+328   uptimes spanning months or even years.
+329
+330   Maybe it shouldn't have been such a surprise, at that. Sociologists years ago discovered that the
+331   averaged opinion of a mass of equally expert (or equally ignorant) observers is quite a bit more
+332   reliable a predictor than the opinion of a single randomly-chosen one of the observers. They called
+333   this the Delphi effect. It appears that what Linus has shown is that this applies even to debugging
+334   an operating system—that the Delphi effect can tame development complexity even at the complexity
+335   level of an OS kernel. [CV]
+336
+337   One special feature of the Linux situation that clearly helps along the Delphi effect is the fact
+338   that the contributors for any given project are self-selected. An early respondent pointed out that
+339   contributions are received not from a random sample, but from people who are interested enough to
+340   use the software, learn about how it works, attempt to find solutions to problems they encounter,
+341   and actually produce an apparently reasonable fix. Anyone who passes all these filters is highly
+342   likely to have something useful to contribute.
+343
+344   Linus's Law can be rephrased as "Debugging is parallelizable". Although debugging requires debuggers
+345   to communicate with some coordinating developer, it doesn't require significant coordination between
+346   debuggers. Thus it doesn't fall prey to the same quadratic complexity and management costs that make
+347   adding developers problematic.
+348
+349   In practice, the theoretical loss of efficiency due to duplication of work by debuggers almost never
+350   seems to be an issue in the Linux world. One effect of a "release early and often" policy is to
+351   minimize such duplication by propagating fed-back fixes quickly [JH].
+352
+353   Brooks (the author of The Mythical Man-Month) even made an off-hand observation related to this:
+354   "The total cost of maintaining a widely used program is typically 40 percent or more of the cost of
+355   developing it. Surprisingly this cost is strongly affected by the number of users. More users find
+356   more bugs." [emphasis added].
+357
+358   More users find more bugs because adding more users adds more different ways of stressing the
+359   program. This effect is amplified when the users are co-developers. Each one approaches the task of
+360   bug characterization with a slightly different perceptual set and analytical toolkit, a different
+361   angle on the problem. The "Delphi effect" seems to work precisely because of this variation. In the
+362   specific context of debugging, the variation also tends to reduce duplication of effort.
+363
+364   So adding more beta-testers may not reduce the complexity of the current "deepest" bug from the
+365   developer's point of view, but it increases the probability that someone's toolkit will be matched
+366   to the problem in such a way that the bug is shallow to that person.
+367
+368   Linus coppers his bets, too. In case there are serious bugs, Linux kernel version are numbered in
+369   such a way that potential users can make a choice either to run the last version designated "stable"
+370   or to ride the cutting edge and risk bugs in order to get new features. This tactic is not yet
+371   systematically imitated by most Linux hackers, but perhaps it should be; the fact that either choice
+372   is available makes both more attractive. [HBS]
+373
+374   = How Many Eyeballs Tame Complexity =

@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<!-- Root element of XML file is cars -->
+	<xs:element name="cars">
+		<xs:complexType>
+			<xs:sequence>
+				<!-- Cars contains several complex car elements -->
+				<xs:element name="car" maxOccurs="unbounded">
+					<!-- internal structure of car element must follow the sequence below -->
+					<xs:complexType>
+						<xs:sequence>
+							<!-- following are simple elements -->
+							<xs:element name="model" type="xs:string" />
+							<xs:element name="color" type="xs:string" />
+							<xs:element name="year" type="xs:integer" />
+							<xs:element name="price" type="xs:float" />
+						</xs:sequence>
+						<!-- This is required string attribute of the car with fixed value 
+							requirements -->
+						<xs:attribute name="id" use="required">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:pattern value="[0-9]{4}" />
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:attribute>
+						<!-- this is required string attribute of the car without any other 
+							requirements -->
+						<xs:attribute name="notes" type="xs:string" use="required">
+						</xs:attribute>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

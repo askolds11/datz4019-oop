@@ -1,0 +1,35 @@
+1
+2              _____ _             ____      _   _              _           _
+3             |_   _| |__   ___   / ___|__ _| |_| |__   ___  __| |_ __ __ _| |
+4               | | | '_ \ / _ \ | |   / _' | __| '_ \ / _ \/ _' | '__/ _' | |
+5               | | | | | |  __/ | |__| (_| | |_| | | |  __/ (_| | | | (_| | |
+6               |_| |_| |_|\___|  \____\__,_|\__|_| |_|\___|\__,_|_|  \__,_|_|
+7                           _   _   _            ____
+8            __ _ _ __   __| | | |_| |__   ___  | __ )  __ _ ______ _  __ _ _ __
+9           / _' | '_ \ / _' | | __| '_ \ / _ \ |  _ \ / _' |_  / _' |/ _' | '__|
+10         | (_| | | | | (_| | | |_| | | |  __/ | |_) | (_| |/ / (_| | (_| | |
+11          \__,_|_| |_|\__,_|  \__|_| |_|\___| |____/ \__,_/___\__,_|\__,_|_|
+12
+13                                    Eric Steven Raymond
+14
+15    Permission is granted to copy, distribute and/or modify this document under the terms of
+16    the Open Publication License, version 2.0.
+17
+18    http://www.catb.org/esr/writings/cathedral-bazaar/cathedral-bazaar/
+19
+20    Date: 2002/08/02 09:02:14
+21
+22    = Abstract =
+23
+24    I anatomize a successful open-source project, fetchmail, that was run as a deliberate test of the
+25    surprising theories about software engineering suggested by the history of Linux. I discuss these
+26    theories in terms of two fundamentally different development styles, the "cathedral" model of most
+27    of the commercial world versus the "bazaar" model of the Linux world. I show that these models
+28    derive from opposing assumptions about the nature of the software-debugging task.  I then make a
+29    sustained argument from the Linux experience for the proposition that "Given enough eyeballs, all
+30    bugs are shallow", suggest productive analogies with other self-correcting systems of selfish
+31    agents, and conclude with some exploration of the implications of this insight for the future of
+32    software.
+33
+73
+74    = The Mail Must Get Through =

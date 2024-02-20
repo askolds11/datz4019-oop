@@ -1,0 +1,19 @@
+1499
+1500  = Acknowledgements =
+1501
+1502  This essay was improved by conversations with a large number of people who helped debug it.
+1503  Particular thanks to Jeff Dutky <dutky@wam.umd.edu>, who suggested the "debugging is parallelizable"
+1504  formulation, and helped develop the analysis that proceeds from it. Also to Nancy Lebovitz
+1505  <nancyl@universe.digex.net> for her suggestion that I emulate Weinberg by quoting Kropotkin.
+1506  Perceptive criticisms also came from Joan Eslinger <wombat@kilimanjaro.engr.sgi.com> and Marty Franz
+1507  <marty@net-link.net> of the General Technics list. Glen Vandenburg <glv@vanderburg.org> pointeed out
+1508  the importance of self-selection in contributor populations and suggested the fruitful idea that
+1509  much development rectifies 'bugs of omission'; Daniel Upper <upper@peak.org> suggested the natural
+1510  analogies for this. I'm grateful to the members of PLUG, the Philadelphia Linux User's group, for
+1511  providing the first test audience for the first public version of this essay.  Paula Matuszek
+1512  <matusp00@mh.us.sbphrd.com> enlightened me about the practice of software management. Phil Hudson
+1513  <phil.hudson@iname.com> reminded me that the social organization of the hacker culture mirrors the
+1514  organization of its software, and vice-versa. John Buck <johnbuck@sea.ece.umassd.edu> pointed out
+1515  that MATLAB makes an instructive parallel to Emacs. Russell Johnston <russjj@mail.com> brought me to
+1516  consciousness about some of the mechanisms discussed in "How Many Eyeballs Tame Complexity."
+1517  Finally, Linus Torvalds's comments were helpful and his early endorsement very encouraging.
