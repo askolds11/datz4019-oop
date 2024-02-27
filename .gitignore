@@ -1,4 +1,13 @@
-target/*
 .classpath
+.idea/**
+*.iml
+**/.~lock*
+*.log
+logs/**
+.metadata/**
 .project
-.idea/*
+.settings/**
+doc/**
+lib/**
+target/**
+wbp-meta/**
