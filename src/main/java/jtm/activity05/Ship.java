@@ -14,7 +14,7 @@ public class Ship extends Transport {
 
     @Override
     public String move(Road road) {
-        if (!(road instanceof WaterRoad)) {
+        if (!(road.getClass() == WaterRoad.class)) {
             return "Cannot sail on " + road.toString();
         }
         return this.getType() + " is sailing on " + road.toString() + " with " + sails + " sails";
