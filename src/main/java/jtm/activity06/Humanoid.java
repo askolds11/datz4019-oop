@@ -8,7 +8,7 @@ public interface Humanoid {
 	final static int BirthWeight = 2;
 
 	/**
-	 * @param If Humanoid's stomach is empty, eat food and gain weight
+	 * @param food If Humanoid's stomach is empty, eat food and gain weight
 	 */
 	public void eat(Integer food);
 

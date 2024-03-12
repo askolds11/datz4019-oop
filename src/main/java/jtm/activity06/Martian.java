@@ -54,23 +54,24 @@ public class Martian implements Alien, Humanoid, Cloneable {
     }
 
     private Object clone(Object current) {
-        // TODO implement cloning of current object
+        // cloning of current object
         // and its stomach
-        Martian martian = new Martian();
-        if (stomach instanceof Human) {
-            Human human = new Human();
-            human.eat(((Human) stomach).getWeight() - Humanoid.BirthWeight);
-            human.killHimself();
-        } else if (stomach instanceof Martian) {
-            try {
-                martian.eat(((Martian) stomach).clone());
-            } catch (Exception ex) {
-
-            }
-        } else if (stomach instanceof Integer) {
-            martian.eat(stomach);
+        Object cloned = null;
+        if (current instanceof Human) {
+            cloned = new Human();
+            ((Human) cloned).eat(((Human) current).getWeight() - Humanoid.BirthWeight);
+            ((Human) cloned).killHimself();
+        } else if (current instanceof Martian) {
+            cloned = new Martian();
+            ((Martian) cloned).eat(
+                clone(
+                    ((Martian) current).stomach
+                )
+            );
+        } else if (current instanceof Integer) {
+            cloned = current;
         }
-        return martian;
+        return cloned;
     }
 
     /**
