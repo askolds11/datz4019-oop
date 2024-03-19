@@ -48,7 +48,7 @@ public class SimpleCalc {
 		}
 	}
 
-	// TODO use this method to check that result of operation is also in
+	// use this method to check that result of operation is also in
 	// range of -10..+10.
 	// If result is not in range:
 	// throw SimpleCalcException with message:
