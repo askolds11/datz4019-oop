@@ -1,20 +1,15 @@
 package jtm.activity09;
 
 
-/*- TODO #2
+/*-
  * Implement Iterator interface with Orders class
  * Hint! Use generic type argument of iterateable items in form: Iterator<Order>
- *
- * 
- * Hints:
- *
  */
 
 import java.util.*;
 
 public class Orders implements Iterator<Order> {
 	/*-
-	 * TODO #1
 	 * Create data structure to hold:
 	 *   1. some kind of collection of Orders (e.g. some List)
 	 *   2. index to the current order for iterations through the Orders in Orders
@@ -78,7 +73,7 @@ public class Orders implements Iterator<Order> {
 			itemsSet.add(new Order(String.join(",", sortedCustomers), itemName, count));
 		}
 
-		// for some reason set needs to be sorted
+		// for some reason set needs to be sorted - not mentioned in reqs
 		List<Order> sortedItemsSet = new ArrayList<>(itemsSet);
 		Collections.sort(sortedItemsSet);
 		itemsSet = new LinkedHashSet<>(sortedItemsSet);
