@@ -1,15 +1,8 @@
 package jtm.activity11;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.BindException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Properties;
 
 /**
  * This class works as a wrapper for TttCli class and allows to send data
@@ -34,19 +27,27 @@ public class TttNet {
 			InputStream input;
 			OutputStream output;
 			/*-
-			 * TODO #1
+			 * #1
 			 * create ServerSocket object and get
 			 * Socket object by executing accept() method for it
 			 */
-			/*- TODO #2
+			server = new ServerSocket(port);
+			socket = server.accept();
+
+			/*- #2
 			 * Initialize input/output streams to the socket
 			 * input = InputStream < Socket
 			 * output = OutputStream < Socket
 			 */
-			/*- TODO #3
+			input = socket.getInputStream();
+			output = socket.getOutputStream();
+
+			/*- #3
 			 * Create TttCli object and use initialized socket streams for it's input and output
 			 * execute play() method for it to start it running
 			 */
+			tttCli = new TttCli(input, output, size);
+			tttCli.play();
 		} catch (Exception e) {
 			// catching BindException is OK, if second instance is executed, just continue
 			// then, catching other exceptions may not be OK
@@ -56,11 +57,12 @@ public class TttNet {
 			BufferedReader stdin, srvin;
 			PrintWriter srvout, stdout;
 
-			/*- TODO #1
+			/*- #1
 			 * initialize client socket to the server
 			 */
+			socket = new Socket(host, port);
 			/*-
-			 *  TODO #2 intitialize readers and writers to the streams of socket
+			 *  #2 intitialize readers and writers to the streams of socket
 			 *  and to system input and output:
 			 *  
 			 *  srvin = BufferedReader < InputStreamReader < InputStream < Socket
@@ -68,8 +70,14 @@ public class TttNet {
 			 *  stdin = BufferedReader < InputStreamReader < System.in
 			 *  srvout = PrintWriter > OutputStream > Socket
 			 */
+
+			srvin = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			stdout = new PrintWriter(System.out);
+			stdin = new BufferedReader(new InputStreamReader(System.in));
+			srvout = new PrintWriter(socket.getOutputStream());
+
 			/*-
-			 *  TODO #3
+			 *  #3
 			 *  While game is not ended:
 			 *      1. read lines from srvin
 			 *      2. print them to stdout
@@ -83,6 +91,22 @@ public class TttNet {
 			 *  2. Don't forget to flush buffers!
 			 *  3. Don't forget to close socket!
 			 */
+			while (!socket.isClosed()) {
+				String line;
+				do {
+					line = srvin.readLine();
+					stdout.println(line);
+				} while (!line.equals("Game ended!") && !line.equals("Enter place:"));
+
+				stdout.flush();
+
+				if (line.equals("Enter place:")) {
+					srvout.println(stdin.readLine());
+					srvout.flush();
+				} else {
+					socket.close();
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
