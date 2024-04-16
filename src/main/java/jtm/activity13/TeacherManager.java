@@ -1,11 +1,9 @@
 package jtm.activity13;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
+import jtm.TestUtils;
+
+import java.sql.*;
+import java.util.LinkedList;
 import java.util.List;
 
 public class TeacherManager {
@@ -20,7 +18,7 @@ public class TeacherManager {
 
 	public TeacherManager() {
 		/*-
-		 * TODO #1 When new TeacherManager is created, create connection to the database server:
+		 * #1 When new TeacherManager is created, create connection to the database server:
 		 * - url = "jdbc:mysql://localhost/?autoReconnect=true&serverTimezone=UTC&characterEncoding=utf8"
 		 * - user = TestUtils.user
 		 * - pass = TestUtils.password
@@ -30,6 +28,17 @@ public class TeacherManager {
 		 * server-wise, not just database-wise.
 		 * 3. Set AutoCommit to false and use commit() where necessary in other methods
 		 */
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver"); // Load the driver class
+			conn = DriverManager.getConnection(
+					"jdbc:mysql://localhost/?autoReconnect=true&serverTimezone=UTC&characterEncoding=utf8",
+					TestUtils.user,
+					TestUtils.password
+			); //Create connection
+			conn.setAutoCommit(false);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -40,7 +49,7 @@ public class TeacherManager {
 	 */
 	public Teacher findTeacher(int id) {
 
-		/*- TODO #2 Write an sql statement that searches teacher by ID.
+		/*- #2 Write an sql statement that searches teacher by ID.
 		 * If teacher is not found return Teacher object with zero or null in its fields!
 		 * Hints:
 		 * 1. Because default database is not set in connection,
@@ -48,7 +57,29 @@ public class TeacherManager {
 		 * 2. Do not't use transactions for search (autocommit=false, commit() is not called)
 		 *    because table should not be blocked for concurrent write during search
 		 */
-		return null;
+		String sql = "SELECT * FROM `" + database + "`.`Teacher` WHERE id = ?;";
+		PreparedStatement preparedStatement;
+		ResultSet resultSet;
+		try {
+			preparedStatement = conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+			preparedStatement.setInt(1, id);
+			resultSet = preparedStatement.executeQuery();
+			if (resultSet.first()) {
+				return new Teacher(
+						resultSet.getInt("id"),
+						resultSet.getString("firstName"),
+						resultSet.getString("lastName")
+				);
+			}
+		} catch (SQLException e) {
+			try {
+				conn.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+		}
+		return new Teacher(0, null, null);
 	}
 
 	/**
@@ -60,7 +91,7 @@ public class TeacherManager {
 	 * @return a list of Teacher object.
 	 */
 	public List<Teacher> findTeacher(String firstName, String lastName) {
-		/*- TODO #3 Write an sql statement that searches teacher by first and
+		/*- #3 Write an sql statement that searches teacher by first and
 		 * last name and returns results as List<Teacher>.
 		 * Note that search results of partial match
 		 * in form ...like '%value%'... should be returned
@@ -68,7 +99,33 @@ public class TeacherManager {
 		 * Do not't use transactions for search (autocommit=false, commit() is not called)
 		 * because table should not be blocked for concurrent write during search
 		 */
-		return null;
+		List<Teacher> result = new LinkedList<>();
+		String sql = "SELECT * FROM `" + database + "`.`Teacher` WHERE firstName like ? AND lastName like ?;";
+		PreparedStatement preparedStatement;
+		ResultSet resultSet;
+		try {
+			preparedStatement = conn.prepareStatement(sql);
+			preparedStatement.setString(1, "%" + firstName + "%");
+			preparedStatement.setString(2, "%" + lastName + "%");
+			resultSet = preparedStatement.executeQuery();
+			while(resultSet.next()) {
+				result.add(
+					new Teacher(
+						resultSet.getInt("id"),
+						resultSet.getString("firstName"),
+						resultSet.getString("lastName")
+					)
+				);
+			}
+		} catch (SQLException e) {
+			try {
+				conn.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+		}
+		return result;
 
 	}
 
@@ -81,8 +138,25 @@ public class TeacherManager {
 	 */
 
 	public boolean insertTeacher(String firstName, String lastName) {
-		// TODO #4 Write an sql statement that inserts teacher in database.
-		return false;
+		String sql = "INSERT INTO `" + database + "`.`Teacher` (`firstname`, `lastname`) VALUES (?, ?);";
+		PreparedStatement preparedStatement;
+		int rowsAffected;
+		try {
+			preparedStatement = conn.prepareStatement(sql);
+			preparedStatement.setString(1, firstName);
+			preparedStatement.setString (2, lastName);
+			rowsAffected = preparedStatement.executeUpdate();
+			conn.commit();
+		} catch (SQLException e) {
+			try {
+				conn.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+			return false;
+		}
+		return rowsAffected > 0;
 	}
 
 	/**
@@ -92,8 +166,27 @@ public class TeacherManager {
 	 * @return true on success, false on error (e.g. non-unique id)
 	 */
 	public boolean insertTeacher(Teacher teacher) {
-		// TODO #5 Write an sql statement that inserts teacher in database.
-		return false;
+		// #5 Write an sql statement that inserts teacher in database.
+		String sql = "INSERT INTO `" + database + "`.`Teacher` (`id`, `firstname`, `lastname`) VALUES (?, ?, ?);";
+		PreparedStatement preparedStatement;
+		int rowsAffected;
+		try {
+			preparedStatement = conn.prepareStatement(sql);
+			preparedStatement.setInt(1, teacher.getId());
+			preparedStatement.setString(2, teacher.getFirstName());
+			preparedStatement.setString (3, teacher.getLastName());
+			rowsAffected = preparedStatement.executeUpdate();
+			conn.commit();
+		} catch (SQLException e) {
+			try {
+				conn.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+			return false;
+		}
+		return rowsAffected > 0;
 	}
 
 	/**
@@ -104,8 +197,27 @@ public class TeacherManager {
 	 * @return true if row was updated.
 	 */
 	public boolean updateTeacher(Teacher teacher) {
-		// TODO #6 Write an sql statement that updates teacher information.
-		return false;
+		// #6 Write an sql statement that updates teacher information.
+		String sql = "UPDATE `" + database + "`.`Teacher` SET `firstname` = ?, `lastname` = ? WHERE `id` = ?;";
+		PreparedStatement preparedStatement;
+		int rowsAffected;
+		try {
+			preparedStatement = conn.prepareStatement(sql);
+			preparedStatement.setString(1, teacher.getFirstName());
+			preparedStatement.setString (2, teacher.getLastName());
+			preparedStatement.setInt(3, teacher.getId());
+			rowsAffected = preparedStatement.executeUpdate();
+			conn.commit();
+		} catch (SQLException e) {
+			try {
+				conn.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+			return false;
+		}
+		return rowsAffected > 0;
 	}
 
 	/**
@@ -116,12 +228,34 @@ public class TeacherManager {
 	 * @return true if row was deleted.
 	 */
 	public boolean deleteTeacher(int id) {
-		// TODO #7 Write an sql statement that deletes teacher from database.
-		return false;
+		// #7 Write an sql statement that deletes teacher from database.
+		String sql = "DELETE FROM `" + database + "`.`Teacher` WHERE `id` = ?;";
+		PreparedStatement preparedStatement;
+		int rowsAffected;
+		try {
+			preparedStatement = conn.prepareStatement(sql);
+			preparedStatement.setInt(1, id);
+			rowsAffected = preparedStatement.executeUpdate();
+			conn.commit();
+		} catch (SQLException e) {
+			try {
+				conn.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+			return false;
+		}
+		return rowsAffected > 0;
 	}
 
 	public void closeConnecion() {
-		// TODO Close connection to the database server
-	}
+		// Close connection to the database server
+        try {
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
 }
