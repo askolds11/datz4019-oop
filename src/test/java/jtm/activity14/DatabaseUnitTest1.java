@@ -100,7 +100,7 @@ public class DatabaseUnitTest1 {
             doThrow(new SQLException("Change autocommit exception")).when(mockedConn).setAutoCommit(Mockito.anyBoolean());
             doThrow(new SQLException("Rollback exception")).when(mockedConn).rollback();
             doThrow(new SQLException("Prepare statement exception")).when(mockedConn).prepareStatement(Mockito.anyString());
-//            doThrow(new SQLException("Prepare statement exception")).when(mockedConn).prepareStatement(Mockito.anyString(), ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            doThrow(new SQLException("Prepare statement exception 2")).when(mockedConn).prepareStatement(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt());
             manager.conn = mockedConn;
 
             manager.insertStudent("", "");
