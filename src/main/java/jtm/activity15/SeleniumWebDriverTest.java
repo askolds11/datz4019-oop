@@ -54,9 +54,9 @@ public class SeleniumWebDriverTest extends JTMTest {
 		// Firefox driver:
 		System.setProperty("webdriver.gecko.driver", "lib/geckodriver");
 		// If necessary, set path to firefox executable e.g.:
-		// System.setProperty("webdriver.firefox.bin", "/usr/bin/firefox");
+		System.setProperty("webdriver.firefox.bin", "/usr/bin/firefox");
 		// Chromium driver:
-		System.setProperty("webdriver.chrome.driver", "lib/chromedriver");
+//		System.setProperty("webdriver.chrome.driver", "lib/chromedriver");
 		// Use either Firefox or Chromium driver:
 		driver = new FirefoxDriver();
 		// driver = new ChromeDriver();
