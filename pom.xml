@@ -174,9 +174,10 @@
 				<!-- Set explicitly Java version for compiler -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.0</version>
+				<version>3.9.0</version>
 				<configuration>
-					<release>11</release>
+					<source>11</source>
+					<target>11</target>
 				</configuration>
 			</plugin>
 			<!-- Jacoco coverage as maven task, to get results, run: 'mvn verify' 
