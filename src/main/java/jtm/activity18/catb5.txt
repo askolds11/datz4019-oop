@@ -1,3 +1,329 @@
+1173  = Epilog: Netscape Embraces the Bazaar =
+1174
+1175  It's a strange feeling to realize you're helping make history....
+1176
+1177  On January 22 1998, approximately seven months after I first published The Cathedral and the Bazaar,
+1178  Netscape Communications, Inc. announced plans to give away the source for Netscape Communicator. I
+1179  had had no clue this was going to happen before the day of the announcement.
+1180
+1181  Eric Hahn, executive vice president and chief technology officer at Netscape, emailed me shortly
+1182  afterwards as follows: "On behalf of everyone at Netscape, I want to thank you for helping us get to
+1183  this point in the first place. Your thinking and writings were fundamental inspirations to our
+1184  decision."
+1185
+1186  The following week I flew out to Silicon Valley at Netscape's invitation for a day-long strategy
+1187  conference (on 4 Feb 1998) with some of their top executives and technical people. We designed
+1188  Netscape's source-release strategy and license together.
+1189
+1190  A few days later I wrote the following:
+1191
+1192      * Netscape is about to provide us with a large-scale, real-world test of the bazaar model in the
+1193        commercial world. The open-source culture now faces a danger; if Netscape's execution doesn't work,
+1194        the open-source concept may be so discredited that the commercial world won't touch it again for
+1195        another decade.
+1196
+1197      * On the other hand, this is also a spectacular opportunity. Initial reaction to the move on Wall
+1198        Street and elsewhere has been cautiously positive. We're being given a chance to prove ourselves,
+1199        too. If Netscape regains substantial market share through this move, it just may set off a
+1200        long-overdue revolution in the software industry.
+1201
+1202      * The next year should be a very instructive and interesting time.
+1203
+1204  And indeed it was. As I write in mid-2000, the development of what was later named Mozilla has been
+1205  only a qualified success. It achieved Netscape's original goal, which was to deny Microsoft a
+1206  monopoly lock on the browser market. It has also achieved some dramatic successes (notably the
+1207  release of the next-generation Gecko rendering engine).
+1208
+1209  However, it has not yet garnered the massive development effort from outside Netscape that the
+1210  Mozilla founders had originally hoped for. The problem here seems to be that for a long time the
+1211  Mozilla distribution actually broke one of the basic rules of the bazaar model; it didn't ship with
+1212  something potential contributors could easily run and see working. (Until more than a year after
+1213  release, building Mozilla from source required a license for the proprietary Motif library.)
+1214
+1215  Most negatively (from the point of view of the outside world) the Mozilla group didn't ship a
+1216  production-quality browser for two and a half years after the project launch—and in 1999 one of the
+1217  project's principals caused a bit of a sensation by resigning, complaining of poor management and
+1218  missed opportunities. "Open source," he correctly observed, "is not magic pixie dust."
+1219
+1220  And indeed it is not. The long-term prognosis for Mozilla looks dramatically better now (in November
+1221  2000) than it did at the time of Jamie Zawinski's resignation letter—in the last few weeks the
+1222  nightly releases have finally passed the critical threshold to production usability. But Jamie was
+1223  right to point out that going open will not necessarily save an existing project that suffers from
+1224  ill-defined goals or spaghetti code or any of the software engineering's other chronic ills. Mozilla
+1225  has managed to provide an example simultaneously of how open source can succeed and how it could
+1226  fail.
+1227
+1228  In the mean time, however, the open-source idea has scored successes and found backers elsewhere.
+1229  Since the Netscape release we've seen a tremendous explosion of interest in the open-source
+1230  development model, a trend both driven by and driving the continuing success of the Linux operating
+1231  system. The trend Mozilla touched off is continuing at an accelerating rate.
+1232
+1233  = Notes =
+1234
+1235  [JB] In Programing Pearls, the noted computer-science aphorist Jon Bentley comments on Brooks's
+1236  observation with "If you plan to throw one away, you will throw away two.". He is almost certainly
+1237  right. The point of Brooks's observation, and Bentley's, isn't merely that you should expect first
+1238  attempt to be wrong, it's that starting over with the right idea is usually more effective than
+1239  trying to salvage a mess.
+1240
+1241  [QR] Examples of successful open-source, bazaar development predating the Internet explosion and
+1242  unrelated to the Unix and Internet traditions have existed. The development of the info-Zip
+1243  compression utility during 1990–x1992, primarily for DOS machines, was one such example. Another was
+1244  the RBBS bulletin board system (again for DOS), which began in 1983 and developed a sufficiently
+1245  strong community that there have been fairly regular releases up to the present (mid-1999) despite
+1246  the huge technical advantages of Internet mail and file-sharing over local BBSs. While the info-Zip
+1247  community relied to some extent on Internet mail, the RBBS developer culture was actually able to
+1248  base a substantial on-line community on RBBS that was completely independent of the TCP/IP
+1249  infrastructure.
+1250
+1251  [CV] That transparency and peer review are valuable for taming the complexity of OS development
+1252  turns out, after all, not to be a new concept. In 1965, very early in the history of time-sharing
+1253  operating systems, Corbató and Vyssotsky, co-designers of the Multics operating system, wrote
+1254
+1255  It is expected that the Multics system will be published when it is operating substantially...
+1256  Such publication is desirable for two reasons: First, the system should withstand public scrutiny
+1257  and criticism volunteered by interested readers; second, in an age of increasing complexity, it is
+1258  an obligation to present and future system designers to make the inner operating system as lucid as
+1259  possible so as to reveal the basic system issues.
+1260
+1261  [JH] John Hasler has suggested an interesting explanation for the fact that duplication of effort
+1262  doesn't seem to be a net drag on open-source development. He proposes what I'll dub "Hasler's Law":
+1263  the costs of duplicated work tend to scale sub-qadratically with team size—that is, more slowly than
+1264  the planning and management overhead that would be needed to eliminate them.
+1265
+1266  This claim actually does not contradict Brooks's Law. It may be the case that total complexity
+1267  overhead and vulnerability to bugs scales with the square of team size, but that the costs from
+1268  duplicated work are nevertheless a special case that scales more slowly. It's not hard to develop
+1269  plausible reasons for this, starting with the undoubted fact that it is much easier to agree on
+1270  functional boundaries between different developers' code that will prevent duplication of effort
+1271  than it is to prevent the kinds of unplanned bad interactions across the whole system that underly
+1272  most bugs.
+1273
+1274  The combination of Linus's Law and Hasler's Law suggests that there are actually three critical size
+1275  regimes in software projects. On small projects (I would say one to at most three developers) no
+1276  management structure more elaborate than picking a lead programmer is needed. And there is some
+1277  intermediate range above that in which the cost of traditional management is relatively low, so its
+1278  benefits from avoiding duplication of effort, bug-tracking, and pushing to see that details are not
+1279  overlooked actually net out positive.
+1280
+1281  Above that, however, the combination of Linus's Law and Hasler's Law suggests there is a
+1282  large-project range in which the costs and problems of traditional management rise much faster than
+1283  the expected cost from duplication of effort. Not the least of these costs is a structural inability
+1284  to harness the many-eyeballs effect, which (as we've seen) seems to do a much better job than
+1285  traditional management at making sure bugs and details are not overlooked. Thus, in the
+1286  large-project case, the combination of these laws effectively drives the net payoff of traditional
+1287  management to zero.
+1288
+1289  [HBS] The split between Linux's experimental and stable versions has another function related to,
+1290  but distinct from, hedging risk. The split attacks another problem: the deadliness of deadlines.
+1291  When programmers are held both to an immutable feature list and a fixed drop-dead date, quality goes
+1292  out the window and there is likely a colossal mess in the making. I am indebted to Marco Iansiti and
+1293  Alan MacCormack of the Harvard Business School for showing me me evidence that relaxing either one
+1294  of these constraints can make scheduling workable.
+1295
+1296  One way to do this is to fix the deadline but leave the feature list flexible, allowing features to
+1297  drop off if not completed by deadline. This is essentially the strategy of the "stable" kernel
+1298  branch; Alan Cox (the stable-kernel maintainer) puts out releases at fairly regular intervals, but
+1299  makes no guarantees about when particular bugs will be fixed or what features will beback-ported
+1300  from the experimental branch.
+1301
+1302  The other way to do this is to set a desired feature list and deliver only when it is done. This is
+1303  essentially the strategy of the "experimental" kernel branch. De Marco and Lister cited research
+1304  showing that this scheduling policy ("wake me up when it's done") produces not only the highest
+1305  quality but, on average, shorter delivery times than either "realistic" or "aggressive" scheduling.
+1306
+1307  I have come to suspect (as of early 2000) that in earlier versions of this essay I severely
+1308  underestimated the importance of the "wake me up when it's done" anti-deadline policy to the
+1309  open-source community's productivity and quality. General experience with the rushed GNOME 1.0
+1310  release in 1999 suggests that pressure for a premature release can neutralize many of the quality
+1311  benefits open source normally confers.
+1312
+1313  It may well turn out to be that the process transparency of open source is one of three co-equal
+1314  drivers of its quality, along with "wake me up when it's done" scheduling and developer
+1315  self-selection.
+1316
+1317  [SU] It's tempting, and not entirely inaccurate, to see the core-plus-halo organization
+1318  characteristic of open-source projects as an Internet-enabled spin on Brooks's own recommendation
+1319  for solving the N-squared complexity problem, the "surgical-team" organization—but the differences
+1320  are significant. The constellation of specialist roles such as "code librarian" that Brooks
+1321  envisioned around the team leader doesn't really exist; those roles are executed instead by
+1322  generalists aided by toolsets quite a bit more powerful than those of Brooks's day. Also, the
+1323  open-source culture leans heavily on strong Unix traditions of modularity, APIs, and information
+1324  hiding—none of which were elements of Brooks's prescription.
+1325
+1326  [RJ] The respondent who pointed out to me the effect of widely varying trace path lengths on the
+1327  difficulty of characterizing a bug speculated that trace-path difficulty for multiple symptoms of
+1328  the same bug varies "exponentially" (which I take to mean on a Gaussian or Poisson distribution, and
+1329  agree seems very plausible). If it is experimentally possible to get a handle on the shape of this
+1330  distribution, that would be extremely valuable data. Large departures from a flat equal-probability
+1331  distribution of trace difficulty would suggest that even solo developers should emulate the bazaar
+1332  strategy by bounding the time they spend on tracing a given symptom before they switch to another.
+1333  Persistence may not always be a virtue...
+1334
+1335  [IN] An issue related to whether one can start projects from zero in the bazaar style is whether the
+1336  bazaar style is capable of supporting truly innovative work. Some claim that, lacking strong
+1337  leadership, the bazaar can only handle the cloning and improvement of ideas already present at the
+1338  engineering state of the art, but is unable to push the state of the art. This argument was perhaps
+1339  most infamously made by the Halloween Documents, two embarrassing internal Microsoft memoranda
+1340  written about the open-source phenomenon. The authors compared Linux's development of a Unix-like
+1341  operating system to "chasing taillights", and opined "(once a project has achieved "parity" with the
+1342  state-of-the-art), the level of management necessary to push towards new frontiers becomes massive."
+1343
+1344  There are serious errors of fact implied in this argument. One is exposed when the Halloween authors
+1345  themseselves later observe that "often [...] new research ideas are first implemented and available
+1346  on Linux before they are available / incorporated into other platforms."
+1347
+1348  If we read "open source" for "Linux", we see that this is far from a new phenomenon. Historically,
+1349  the open-source community did not invent Emacs or the World Wide Web or the Internet itself by
+1350  chasing taillights or being massively managed—and in the present, there is so much innovative work
+1351  going on in open source that one is spoiled for choice. The GNOME project (to pick one of many) is
+1352  pushing the state of the art in GUIs and object technology hard enough to have attracted
+1353  considerable notice in the computer trade press well outside the Linux community. Other examples are
+1354  legion, as a visit to Freshmeat on any given day will quickly prove.
+1355
+1356  But there is a more fundamental error in the implicit assumption that the cathedral model (or the
+1357  bazaar model, or any other kind of management structure) can somehow make innovation happen
+1358  reliably. This is nonsense. Gangs don't have breakthrough insights—even volunteer groups of bazaar
+1359  anarchists are usually incapable of genuine originality, let alone corporate committees of people
+1360  with a survival stake in some status quo ante. Insight comes from individuals. The most their
+1361  surrounding social machinery can ever hope to do is to be responsive to breakthrough insights—to
+1362  nourish and reward and rigorously test them instead of squashing them.
+1363
+1364  Some will characterize this as a romantic view, a reversion to outmoded lone-inventor stereotypes.
+1365  Not so; I am not asserting that groups are incapable of developing breakthrough insights once they
+1366  have been hatched; indeed, we learn from the peer-review process that such development groups are
+1367  essential to producing a high-quality result. Rather I am pointing out that every such group
+1368  development starts from—is necessarily sparked by—one good idea in one person's head.  Cathedrals
+1369  and bazaars and other social structures can catch that lightning and refine it, but they cannot make
+1370  it on demand.
+1371
+1372  Therefore the root problem of innovation (in software, or anywhere else) is indeed how not to squash
+1373  it—but, even more fundamentally, it is how to grow lots of people who can have insights in the first
+1374  place.
+1375
+1376  To suppose that cathedral-style development could manage this trick but the low entry barriers and
+1377  process fluidity of the bazaar cannot would be absurd. If what it takes is one person with one good
+1378  idea, then a social milieu in which one person can rapidly attract the cooperation of hundreds or
+1379  thousands of others with that good idea is going inevitably to out-innovate any in which the person
+1380  has to do a political sales job to a hierarchy before he can work on his idea without risk of
+1381  getting fired.
+1382
+1383  And, indeed, if we look at the history of software innovation by organizations using the cathedral
+1384  model, we quickly find it is rather rare. Large corporations rely on university research for new
+1385  ideas (thus the Halloween Documents authors' unease about Linux's facility at coopting that research
+1386  more rapidly). Or they buy out small companies built around some innovator's brain. In neither case
+1387  is the innovation native to the cathedral culture; indeed, many innovations so imported end up being
+1388  quietly suffocated under the "massive level of management" the Halloween Documents' authors so
+1389  extol.
+1390
+1391  That, however, is a negative point. The reader would be better served by a positive one. I suggest,
+1392  as an experiment, the following:
+1393
+1394      * Pick a criterion for originality that you believe you can apply consistently. If your definition
+1395        is "I know it when I see it", that's not a problem for purposes of this test.
+1396
+1397      * Pick any closed-source operating system competing with Linux, and a best source for accounts of
+1398        current development work on it.
+1399
+1400      * Watch that source and Freshmeat for one month. Every day, count the number of release
+1401        announcements on Freshmeat that you consider 'original' work. Apply the same definition of
+1402        'original' to announcements for that other OS and count them.
+1403
+1404      * Thirty days later, total up both figures.
+1405
+1406  The day I wrote this, Freshmeat carried twenty-two release announcements, of which three appear they
+1407  might push state of the art in some respect, This was a slow day for Freshmeat, but I will be
+1408  astonished if any reader reports as many as three likely innovations a month in any closed-source
+1409  channel.
+1410
+1411  [EGCS] We now have history on a project that, in several ways, may provide a more indicative test of
+1412  the bazaar premise than fetchmail; EGCS, the Experimental GNU Compiler System.
+1413
+1414  This project was announced in mid-August of 1997 as a conscious attempt to apply the ideas in the
+1415  early public versions of The Cathedral and the Bazaar. The project founders felt that the
+1416  development of GCC, the Gnu C Compiler, had been stagnating. For about twenty months afterwards, GCC
+1417  and EGCS continued as parallel products—both drawing from the same Internet developer population,
+1418  both starting from the same GCC source base, both using pretty much the same Unix toolsets and
+1419  development environment. The projects differed only in that EGCS consciously tried to apply the
+1420  bazaar tactics I have previously described, while GCC retained a more cathedral-like organization
+1421  with a closed developer group and infrequent releases.
+1422
+1423  This was about as close to a controlled experiment as one could ask for, and the results were
+1424  dramatic. Within months, the EGCS versions had pulled substantially ahead in features; better
+1425  optimization, better support for FORTRAN and C++.  Many people found the EGCS development snapshots
+1426  to be more reliable than the most recent stable version of GCC, and major Linux distributions began
+1427  to switch to EGCS.
+1428
+1429  In April of 1999, the Free Software Foundation (the official sponsors of GCC) dissolved the original
+1430  GCC development group and officially handed control of the project to the the EGCS steering team.
+1431
+1432  [SP] Of course, Kropotkin's critique and Linus's Law raise some wider issues about the cybernetics
+1433  of social organizations. Another folk theorem of software engineering suggests one of them; Conway's
+1434  Law—commonly stated as "If you have four groups working on a compiler, you'll get a 4-pass
+1435  compiler". The original statement was more general: "Organizations which design systems are
+1436  constrained to produce designs which are copies of the communication structures of these
+1437  organizations." We might put it more succinctly as "The means determine the ends", or even "Process
+1438  becomes product".
+1439
+1440  It is accordingly worth noting that in the open-source community organizational form and function
+1441  match on many levels.  The network is everything and everywhere: not just the Internet, but the
+1442  people doing the work form a distributed, loosely coupled, peer-to-peer network that provides
+1443  multiple redundancy and degrades very gracefully. In both networks, each node is important only to
+1444  the extent that other nodes want to cooperate with it.
+1445
+1446  The peer-to-peer part is essential to the community's astonishing productivity. The point Kropotkin
+1447  was trying to make about power relationships is developed further by the 'SNAFU Principle': "True
+1448  communication is possible only between equals, because inferiors are more consistently rewarded for
+1449  telling their superiors pleasant lies than for telling the truth." Creative teamwork utterly depends
+1450  on true communication and is thus very seriously hindered by the presence of power relationships.
+1451  The open-source community, effectively free of such power relationships, is teaching us by contrast
+1452  how dreadfully much they cost in bugs, in lowered productivity, and in lost opportunities.
+1453
+1454  Further, the SNAFU principle predicts in authoritarian organizations a progressive disconnect
+1455  between decision-makers and reality, as more and more of the input to those who decide tends to
+1456  become pleasant lies. The way this plays out in conventional software development is easy to see;
+1457  there are strong incentives for the inferiors to hide, ignore, and minimize problems. When this
+1458  process becomes product, software is a disaster.
+1459
+1460  = Bibliography =
+1461
+1462  I quoted several bits from Frederick P. Brooks's classic The Mythical Man-Month because, in many
+1463  respects, his insights have yet to be improved upon. I heartily recommend the 25th Anniversary
+1464  edition from Addison-Wesley (ISBN 0-201-83595-9), which adds his 1986 "No Silver Bullet" paper.
+1465
+1466  The new edition is wrapped up by an invaluable 20-years-later retrospective in which Brooks
+1467  forthrightly admits to the few judgements in the original text which have not stood the test of
+1468  time. I first read the retrospective after the first public version of this essay was substantially
+1469  complete, and was surprised to discover that Brooks attributed bazaar-like practices to Microsoft!
+1470  (In fact, however, this attribution turned out to be mistaken. In 1998 we learned from the Halloween
+1471  Documents that Microsoft's internal developer community is heavily balkanized, with the kind of
+1472  general source access needed to support a bazaar not even truly possible.)
+1473
+1474  Gerald M. Weinberg's The Psychology Of Computer Programming (New York, Van Nostrand Reinhold 1971)
+1475  introduced the rather unfortunately-labeled concept of "egoless programming". While he was nowhere
+1476  near the first person to realize the futility of the "principle of command", he was probably the
+1477  first to recognize and argue the point in particular connection with software development.
+1478
+1479  Richard P. Gabriel, contemplating the Unix culture of the pre-Linux era, reluctantly argued for the
+1480  superiority of a primitive bazaar-like model in his 1989 paper "LISP: Good News, Bad News, and How
+1481  To Win Big". Though dated in some respects, this essay is still rightly celebrated among LISP fans
+1482  (including me). A correspondent reminded me that the section titled "Worse Is Better" reads almost
+1483  as an anticipation of Linux. The paper is accessible on the World Wide Web at
+1484  http://www.naggum.no/worse-is-better.html.
+1485
+1486  De Marco and Lister's Peopleware: Productive Projects and Teams (New York; Dorset House, 1987; ISBN
+1487  0-932633-05-6) is an underappreciated gem which I was delighted to see Fred Brooks cite in his
+1488  retrospective. While little of what the authors have to say is directly applicable to the Linux or
+1489  open-source communities, the authors' insight into the conditions necessary for creative work is
+1490  acute and worthwhile for anyone attempting to import some of the bazaar model's virtues into a
+1491  commercial context.
+1492
+1493  Finally, I must admit that I very nearly called this essay "The Cathedral and the Agora", the latter
+1494  term being the Greek for an open market or public meeting place. The seminal "agoric systems" papers
+1495  by Mark Miller and Eric Drexler, by describing the emergent properties of market-like computational
+1496  ecologies, helped prepare me to think clearly about analogous phenomena in the open-source culture
+1497  when Linux rubbed my nose in them five years later. These papers are available on the Web at
+1498  http://www.agorics.com/agorpapers.html.
 1499
 1500  = Acknowledgements =
 1501

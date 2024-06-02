@@ -1,0 +1,1517 @@
+1
+2              _____ _             ____      _   _              _           _
+3             |_   _| |__   ___   / ___|__ _| |_| |__   ___  __| |_ __ __ _| |
+4               | | | '_ \ / _ \ | |   / _' | __| '_ \ / _ \/ _' | '__/ _' | |
+5               | | | | | |  __/ | |__| (_| | |_| | | |  __/ (_| | | | (_| | |
+6               |_| |_| |_|\___|  \____\__,_|\__|_| |_|\___|\__,_|_|  \__,_|_|
+7                           _   _   _            ____
+8            __ _ _ __   __| | | |_| |__   ___  | __ )  __ _ ______ _  __ _ _ __
+9           / _' | '_ \ / _' | | __| '_ \ / _ \ |  _ \ / _' |_  / _' |/ _' | '__|
+10         | (_| | | | | (_| | | |_| | | |  __/ | |_) | (_| |/ / (_| | (_| | |
+11          \__,_|_| |_|\__,_|  \__|_| |_|\___| |____/ \__,_/___\__,_|\__,_|_|
+12
+13                                    Eric Steven Raymond
+14
+15    Permission is granted to copy, distribute and/or modify this document under the terms of
+16    the Open Publication License, version 2.0.
+17
+18    http://www.catb.org/esr/writings/cathedral-bazaar/cathedral-bazaar/
+19
+20    Date: 2002/08/02 09:02:14
+21
+22    = Abstract =
+23
+24    I anatomize a successful open-source project, fetchmail, that was run as a deliberate test of the
+25    surprising theories about software engineering suggested by the history of Linux. I discuss these
+26    theories in terms of two fundamentally different development styles, the "cathedral" model of most
+27    of the commercial world versus the "bazaar" model of the Linux world. I show that these models
+28    derive from opposing assumptions about the nature of the software-debugging task.  I then make a
+29    sustained argument from the Linux experience for the proposition that "Given enough eyeballs, all
+30    bugs are shallow", suggest productive analogies with other self-correcting systems of selfish
+31    agents, and conclude with some exploration of the implications of this insight for the future of
+32    software.
+33
+34    = The Cathedral and the Bazaar =
+35
+36    Linux is subversive. Who would have thought even five years ago (1991) that a world-class operating
+37    system could coalesce as if by magic out of part-time hacking by several thousand developers
+38    scattered all over the planet, connected only by the tenuous strands of the Internet?
+39
+40    Certainly not I. By the time Linux swam onto my radar screen in early 1993, I had already been
+41    involved in Unix and open-source development for ten years. I was one of the first GNU contributors
+42    in the mid-1980s. I had released a good deal of open-source software onto the net, developing or
+43    co-developing several programs (nethack, Emacs's VC and GUD modes, xlife, and others) that are still
+44    in wide use today. I thought I knew how it was done.
+45
+46    Linux overturned much of what I thought I knew. I had been preaching the Unix gospel of small tools,
+47    rapid prototyping and evolutionary programming for years. But I also believed there was a certain
+48    critical complexity above which a more centralized, a priori approach was required. I believed that
+49    the most important software (operating systems and really large tools like the Emacs programming
+50    editor) needed to be built like cathedrals, carefully crafted by individual wizards or small bands
+51    of mages working in splendid isolation, with no beta to be released before its time.
+52
+53    Linus Torvalds's style of development—release early and often, delegate everything you can, be open
+54    to the point of promiscuity—came as a surprise. No quiet, reverent cathedral-building here—rather,
+55    the Linux community seemed to resemble a great babbling bazaar of differing agendas and approaches
+56    (aptly symbolized by the Linux archive sites, who'd take submissions from anyone) out of which a
+57    coherent and stable system could seemingly emerge only by a succession of miracles.
+58
+59    The fact that this bazaar style seemed to work, and work well, came as a distinct shock. As I
+60    learned my way around, I worked hard not just at individual projects, but also at trying to
+61    understand why the Linux world not only didn't fly apart in confusion but seemed to go from strength
+62    to strength at a speed barely imaginable to cathedral-builders.
+63
+64    By mid-1996 I thought I was beginning to understand. Chance handed me a perfect way to test my
+65    theory, in the form of an open-source project that I could consciously try to run in the bazaar
+66    style. So I did—and it was a significant success.
+67
+68    This is the story of that project. I'll use it to propose some aphorisms about effective open-source
+69    development. Not all of these are things I first learned in the Linux world, but we'll see how the
+70    Linux world gives them particular point. If I'm correct, they'll help you understand exactly what it
+71    is that makes the Linux community such a fountain of good software—and, perhaps, they will help you
+72    become more productive yourself.
+73
+74    = The Mail Must Get Through =
+75
+76    Since 1993 I'd been running the technical side of a small free-access Internet service provider
+77    called Chester County InterLink (CCIL) in West Chester, Pennsylvania. I co-founded CCIL and wrote
+78    our unique multiuser bulletin-board software—you can check it out by telnetting to locke.ccil.org.
+79    Today it supports almost three thousand users on thirty lines. The job allowed me 24-hour-a-day
+80    access to the net through CCIL's 56K line—in fact, the job practically demanded it!
+81
+82    I had gotten quite used to instant Internet email. I found having to periodically telnet over to
+83    locke to check my mail annoying. What I wanted was for my mail to be delivered on snark (my home
+84    system) so that I would be notified when it arrived and could handle it using all my local tools.
+85
+86    The Internet's native mail forwarding protocol, SMTP (Simple Mail Transfer Protocol), wouldn't suit,
+87    because it works best when machines are connected full-time, while my personal machine isn't always
+88    on the Internet, and doesn't have a static IP address. What I needed was a program that would reach
+89    out over my intermittent dialup connection and pull across my mail to be delivered locally. I knew
+90    such things existed, and that most of them used a simple application protocol called POP (Post
+91    Office Protocol). POP is now widely supported by most common mail clients, but at the time, it
+92    wasn't built in to the mail reader I was using.
+93
+94    I needed a POP3 client. So I went out on the Internet and found one. Actually, I found three or
+95    four. I used one of them for a while, but it was missing what seemed an obvious feature, the ability
+96    to hack the addresses on fetched mail so replies would work properly.
+97
+98    The problem was this: suppose someone named 'joe' on locke sent me mail. If I fetched the mail to
+99    snark and then tried to reply to it, my mailer would cheerfully try to ship it to a nonexistent
+100   'joe' on snark. Hand-editing reply addresses to tack on <@ccil.org> quickly got to be a serious
+101   pain.
+102
+103   This was clearly something the computer ought to be doing for me. But none of the existing POP
+104   clients knew how! And this brings us to the first lesson:
+105
+106       1. Every good work of software starts by scratching a developer's personal itch.
+107
+108   Perhaps this should have been obvious (it's long been proverbial that "Necessity is the mother of
+109   invention") but too often software developers spend their days grinding away for pay at programs
+110   they neither need nor love. But not in the Linux world—which may explain why the average quality of
+111   software originated in the Linux community is so high.
+112
+113   So, did I immediately launch into a furious whirl of coding up a brand-new POP3 client to compete
+114   with the existing ones? Not on your life! I looked carefully at the POP utilities I had in hand,
+115   asking myself "Which one is closest to what I want?" Because:
+116
+117       2. Good programmers know what to write. Great ones know what to rewrite (and reuse).
+118
+119   While I don't claim to be a great programmer, I try to imitate one. An important trait of the great
+120   ones is constructive laziness. They know that you get an A not for effort but for results, and that
+121   it's almost always easier to start from a good partial solution than from nothing at all.
+122
+123   Linus Torvalds, for example, didn't actually try to write Linux from scratch. Instead, he started by
+124   reusing code and ideas from Minix, a tiny Unix-like operating system for PC clones. Eventually all
+125   the Minix code went away or was completely rewritten—but while it was there, it provided scaffolding
+126   for the infant that would eventually become Linux.
+127
+128   In the same spirit, I went looking for an existing POP utility that was reasonably well coded, to
+129   use as a development base.
+130
+131   The source-sharing tradition of the Unix world has always been friendly to code reuse (this is why
+132   the GNU project chose Unix as a base OS, in spite of serious reservations about the OS itself). The
+133   Linux world has taken this tradition nearly to its technological limit; it has terabytes of open
+134   sources generally available. So spending time looking for some else's almost-good-enough is more
+135   likely to give you good results in the Linux world than anywhere else.
+136
+137   And it did for me. With those I'd found earlier, my second search made up a total of nine
+138   candidates—fetchpop, PopTart, get-mail, gwpop, pimp, pop-perl, popc, popmail and upop. The one I
+139   first settled on was 'fetchpop' by Seung-Hong Oh. I put my header-rewrite feature in it, and made
+140   various other improvements which the author accepted into his 1.9 release.
+141
+142   A few weeks later, though, I stumbled across the code for popclient by Carl Harris, and found I had
+143   a problem. Though fetchpop had some good original ideas in it (such as its background-daemon mode),
+144   it could only handle POP3 and was rather amateurishly coded (Seung-Hong was at that time a bright
+145   but inexperienced programmer, and both traits showed).  Carl's code was better, quite professional
+146   and solid, but his program lacked several important and rather tricky-to-implement fetchpop features
+147   (including those I'd coded myself).
+148
+149   Stay or switch? If I switched, I'd be throwing away the coding I'd already done in exchange for a
+150   better development base.
+151
+152   A practical motive to switch was the presence of multiple-protocol support. POP3 is the most
+153   commonly used of the post-office server protocols, but not the only one. Fetchpop and the other
+154   competition didn't do POP2, RPOP, or APOP, and I was already having vague thoughts of perhaps adding
+155   IMAP (Internet Message Access Protocol, the most recently designed and most powerful post-office
+156   protocol) just for fun.
+157
+158   But I had a more theoretical reason to think switching might be as good an idea as well, something I
+159   learned long before Linux.
+160
+161       3. "Plan to throw one away; you will, anyhow." (Fred Brooks, The Mythical Man-Month, Chapter 11)
+162
+163   Or, to put it another way, you often don't really understand the problem until after the first time
+164   you implement a solution. The second time, maybe you know enough to do it right. So if you want to
+165   get it right, be ready to start over at least once [JB].
+166
+167   Well (I told myself) the changes to fetchpop had been my first try. So I switched.
+168
+169   After I sent my first set of popclient patches to Carl Harris on 25 June 1996, I found out that he
+170   had basically lost interest in popclient some time before. The code was a bit dusty, with minor bugs
+171   hanging out. I had many changes to make, and we quickly agreed that the logical thing for me to do
+172   was take over the program.
+173
+174   Without my actually noticing, the project had escalated. No longer was I just contemplating minor
+175   patches to an existing POP client. I took on maintaining an entire one, and there were ideas
+176   bubbling in my head that I knew would probably lead to major changes.
+177
+178   In a software culture that encourages code-sharing, this is a natural way for a project to evolve. I
+179   was acting out this principle:
+180
+181       4. If you have the right attitude, interesting problems will find you.
+182
+183   But Carl Harris's attitude was even more important. He understood that
+184
+185       5. When you lose interest in a program, your last duty to it is to hand it off to a competent
+186          successor.
+187
+188   Without ever having to discuss it, Carl and I knew we had a common goal of having the best solution
+189   out there. The only question for either of us was whether I could establish that I was a safe pair
+190   of hands. Once I did that, he acted with grace and dispatch. I hope I will do as well when it comes
+191   my turn.
+192
+193   = The Importance of Having Users =
+194
+195   And so I inherited popclient. Just as importantly, I inherited popclient's user base. Users are
+196   wonderful things to have, and not just because they demonstrate that you're serving a need, that
+197   you've done something right. Properly cultivated, they can become co-developers.
+198
+199   Another strength of the Unix tradition, one that Linux pushes to a happy extreme, is that a lot of
+200   users are hackers too. Because source code is available, they can be effective hackers. This can be
+201   tremendously useful for shortening debugging time. Given a bit of encouragement, your users will
+202   diagnose problems, suggest fixes, and help improve the code far more quickly than you could unaided.
+203
+204       6. Treating your users as co-developers is your least-hassle route to rapid code improvement and
+205          effective debugging.
+206
+207   The power of this effect is easy to underestimate. In fact, pretty well all of us in the open-source
+208   world drastically underestimated how well it would scale up with number of users and against system
+209   complexity, until Linus Torvalds showed us differently.
+210
+211   In fact, I think Linus's cleverest and most consequential hack was not the construction of the Linux
+212   kernel itself, but rather his invention of the Linux development model. When I expressed this
+213   opinion in his presence once, he smiled and quietly repeated something he has often said: "I'm
+214   basically a very lazy person who likes to get credit for things other people actually do." Lazy like
+215   a fox. Or, as Robert Heinlein famously wrote of one of his characters, too lazy to fail.
+216
+217   In retrospect, one precedent for the methods and success of Linux can be seen in the development of
+218   the GNU Emacs Lisp library and Lisp code archives. In contrast to the cathedral-building style of
+219   the Emacs C core and most other GNU tools, the evolution of the Lisp code pool was fluid and very
+220   user-driven. Ideas and prototype modes were often rewritten three or four times before reaching a
+221   stable final form. And loosely-coupled collaborations enabled by the Internet, a la Linux, were
+222   frequent.
+223
+224   Indeed, my own most successful single hack previous to fetchmail was probably Emacs VC (version
+225   control) mode, a Linux-like collaboration by email with three other people, only one of whom
+226   (Richard Stallman, the author of Emacs and founder of the Free Software Foundation) I have met to
+227   this day. It was a front-end for SCCS, RCS and later CVS from within Emacs that offered "one-touch"
+228   version control operations. It evolved from a tiny, crude sccs.el mode somebody else had written.
+229   And the development of VC succeeded because, unlike Emacs itself, Emacs Lisp code could go through
+230   release/test/improve generations very quickly.
+231
+232   The Emacs story is not unique. There have been other software products with a two-level architecture
+233   and a two-tier user community that combined a cathedral-mode core and a bazaar-mode toolbox. One
+234   such is MATLAB, a commercial data-analysis and visualization tool. Users of MATLAB and other
+235   products with a similar structure invariably report that the action, the ferment, the innovation
+236   mostly takes place in the open part of the tool where a large and varied community can tinker with
+237   it.
+238
+239   = Release Early, Release Often =
+240
+241   Early and frequent releases are a critical part of the Linux development model. Most developers
+242   (including me) used to believe this was bad policy for larger than trivial projects, because early
+243   versions are almost by definition buggy versions and you don't want to wear out the patience of your
+244   users.
+245
+246   This belief reinforced the general commitment to a cathedral-building style of development. If the
+247   overriding objective was for users to see as few bugs as possible, why then you'd only release a
+248   version every six months (or less often), and work like a dog on debugging between releases. The
+249   Emacs C core was developed this way. The Lisp library, in effect, was not—because there were active
+250   Lisp archives outside the FSF's control, where you could go to find new and development code
+251   versions independently of Emacs's release cycle [QR].
+252
+253   The most important of these, the Ohio State Emacs Lisp archive, anticipated the spirit and many of
+254   the features of today's big Linux archives. But few of us really thought very hard about what we
+255   were doing, or about what the very existence of that archive suggested about problems in the FSF's
+256   cathedral-building development model. I made one serious attempt around 1992 to get a lot of the
+257   Ohio code formally merged into the official Emacs Lisp library. I ran into political trouble and was
+258   largely unsuccessful.
+259
+260   But by a year later, as Linux became widely visible, it was clear that something different and much
+261   healthier was going on there. Linus's open development policy was the very opposite of
+262   cathedral-building. Linux's Internet archives were burgeoning, multiple distributions were being
+263   floated. And all of this was driven by an unheard-of frequency of core system releases.
+264
+265   Linus was treating his users as co-developers in the most effective possible way:
+266
+267       7. Release early. Release often. And listen to your customers.
+268
+269   Linus's innovation wasn't so much in doing quick-turnaround releases incorporating lots of user
+270   feedback (something like this had been Unix-world tradition for a long time), but in scaling it up
+271   to a level of intensity that matched the complexity of what he was developing. In those early times
+272   (around 1991) it wasn't unknown for him to release a new kernel more than once a day! Because he
+273   cultivated his base of co-developers and leveraged the Internet for collaboration harder than anyone
+274   else, this worked.
+275
+276   But how did it work? And was it something I could duplicate, or did it rely on some unique genius of
+277   Linus Torvalds?
+278
+279   I didn't think so. Granted, Linus is a damn fine hacker. How many of us could engineer an entire
+280   production-quality operating system kernel from scratch? But Linux didn't represent any awesome
+281   conceptual leap forward. Linus is not (or at least, not yet) an innovative genius of design in the
+282   way that, say, Richard Stallman or James Gosling (of NeWS and Java) are. Rather, Linus seems to me
+283   to be a genius of engineering and implementation, with a sixth sense for avoiding bugs and
+284   development dead-ends and a true knack for finding the minimum-effort path from point A to point B.
+285   Indeed, the whole design of Linux breathes this quality and mirrors Linus's essentially conservative
+286   and simplifying design approach.
+287
+288   So, if rapid releases and leveraging the Internet medium to the hilt were not accidents but integral
+289   parts of Linus's engineering-genius insight into the minimum-effort path, what was he maximizing?
+290   What was he cranking out of the machinery?
+291
+292   Put that way, the question answers itself. Linus was keeping his hacker/users constantly stimulated
+293   and rewarded—stimulated by the prospect of having an ego-satisfying piece of the action, rewarded by
+294   the sight of constant (even daily) improvement in their work.
+295
+296   Linus was directly aiming to maximize the number of person-hours thrown at debugging and
+297   development, even at the possible cost of instability in the code and user-base burnout if any
+298   serious bug proved intractable. Linus was behaving as though he believed something like this:
+299
+300       8. Given a large enough beta-tester and co-developer base, almost every problem will be
+301          characterized quickly and the fix obvious to someone.
+302
+303   Or, less formally, "Given enough eyeballs, all bugs are shallow." I dub this: "Linus's Law".
+304
+305   My original formulation was that every problem "will be transparent to somebody". Linus demurred
+306   that the person who understands and fixes the problem is not necessarily or even usually the person
+307   who first characterizes it. "Somebody finds the problem," he says, "and somebody else understands
+308   it. And I'll go on record as saying that finding it is the bigger challenge." That correction is
+309   important; we'll see how in the next section, when we examine the practice of debugging in more
+310   detail. But the key point is that both parts of the process (finding and fixing) tend to happen
+311   rapidly.
+312
+313   In Linus's Law, I think, lies the core difference underlying the cathedral-builder and bazaar
+314   styles. In the cathedral-builder view of programming, bugs and development problems are tricky,
+315   insidious, deep phenomena. It takes months of scrutiny by a dedicated few to develop confidence that
+316   you've winkled them all out. Thus the long release intervals, and the inevitable disappointment when
+317   long-awaited releases are not perfect.
+318
+319   In the bazaar view, on the other hand, you assume that bugs are generally shallow phenomena—or, at
+320   least, that they turn shallow pretty quickly when exposed to a thousand eager co-developers pounding
+321   on every single new release. Accordingly you release often in order to get more corrections, and as
+322   a beneficial side effect you have less to lose if an occasional botch gets out the door.
+323
+324   And that's it. That's enough. If "Linus's Law" is false, then any system as complex as the Linux
+325   kernel, being hacked over by as many hands as the that kernel was, should at some point have
+326   collapsed under the weight of unforseen bad interactions and undiscovered "deep" bugs. If it's true,
+327   on the other hand, it is sufficient to explain Linux's relative lack of bugginess and its continuous
+328   uptimes spanning months or even years.
+329
+330   Maybe it shouldn't have been such a surprise, at that. Sociologists years ago discovered that the
+331   averaged opinion of a mass of equally expert (or equally ignorant) observers is quite a bit more
+332   reliable a predictor than the opinion of a single randomly-chosen one of the observers. They called
+333   this the Delphi effect. It appears that what Linus has shown is that this applies even to debugging
+334   an operating system—that the Delphi effect can tame development complexity even at the complexity
+335   level of an OS kernel. [CV]
+336
+337   One special feature of the Linux situation that clearly helps along the Delphi effect is the fact
+338   that the contributors for any given project are self-selected. An early respondent pointed out that
+339   contributions are received not from a random sample, but from people who are interested enough to
+340   use the software, learn about how it works, attempt to find solutions to problems they encounter,
+341   and actually produce an apparently reasonable fix. Anyone who passes all these filters is highly
+342   likely to have something useful to contribute.
+343
+344   Linus's Law can be rephrased as "Debugging is parallelizable". Although debugging requires debuggers
+345   to communicate with some coordinating developer, it doesn't require significant coordination between
+346   debuggers. Thus it doesn't fall prey to the same quadratic complexity and management costs that make
+347   adding developers problematic.
+348
+349   In practice, the theoretical loss of efficiency due to duplication of work by debuggers almost never
+350   seems to be an issue in the Linux world. One effect of a "release early and often" policy is to
+351   minimize such duplication by propagating fed-back fixes quickly [JH].
+352
+353   Brooks (the author of The Mythical Man-Month) even made an off-hand observation related to this:
+354   "The total cost of maintaining a widely used program is typically 40 percent or more of the cost of
+355   developing it. Surprisingly this cost is strongly affected by the number of users. More users find
+356   more bugs." [emphasis added].
+357
+358   More users find more bugs because adding more users adds more different ways of stressing the
+359   program. This effect is amplified when the users are co-developers. Each one approaches the task of
+360   bug characterization with a slightly different perceptual set and analytical toolkit, a different
+361   angle on the problem. The "Delphi effect" seems to work precisely because of this variation. In the
+362   specific context of debugging, the variation also tends to reduce duplication of effort.
+363
+364   So adding more beta-testers may not reduce the complexity of the current "deepest" bug from the
+365   developer's point of view, but it increases the probability that someone's toolkit will be matched
+366   to the problem in such a way that the bug is shallow to that person.
+367
+368   Linus coppers his bets, too. In case there are serious bugs, Linux kernel version are numbered in
+369   such a way that potential users can make a choice either to run the last version designated "stable"
+370   or to ride the cutting edge and risk bugs in order to get new features. This tactic is not yet
+371   systematically imitated by most Linux hackers, but perhaps it should be; the fact that either choice
+372   is available makes both more attractive. [HBS]
+373
+374   = How Many Eyeballs Tame Complexity =
+375
+376   It's one thing to observe in the large that the bazaar style greatly accelerates debugging and code
+377   evolution. It's another to understand exactly how and why it does so at the micro-level of
+378   day-to-day developer and tester behavior. In this section (written three years after the original
+379   paper, using insights by developers who read it and re-examined their own behavior) we'll take a
+380   hard look at the actual mechanisms. Non-technically inclined readers can safely skip to the next
+381   section.
+382
+383   One key to understanding is to realize exactly why it is that the kind of bug report
+384   non–source-aware users normally turn in tends not to be very useful. Non–source-aware users tend to
+385   report only surface symptoms; they take their environment for granted, so they (a) omit critical
+386   background data, and (b) seldom include a reliable recipe for reproducing the bug.
+387
+388   The underlying problem here is a mismatch between the tester's and the developer's mental models of
+389   the program; the tester, on the outside looking in, and the developer on the inside looking out. In
+390   closed-source development they're both stuck in these roles, and tend to talk past each other and
+391   find each other deeply frustrating.
+392
+393   Open-source development breaks this bind, making it far easier for tester and developer to develop a
+394   shared representation grounded in the actual source code and to communicate effectively about it.
+395   Practically, there is a huge difference in leverage for the developer between the kind of bug report
+396   that just reports externally-visible symptoms and the kind that hooks directly to the developer's
+397   source-code–based mental representation of the program.
+398
+399   Most bugs, most of the time, are easily nailed given even an incomplete but suggestive
+400   characterization of their error conditions at source-code level. When someone among your
+401   beta-testers can point out, "there's a boundary problem in line nnn", or even just "under conditions
+402   X, Y, and Z, this variable rolls over", a quick look at the offending code often suffices to pin
+403   down the exact mode of failure and generate a fix.
+404
+405   Thus, source-code awareness by both parties greatly enhances both good communication and the synergy
+406   between what a beta-tester reports and what the core developer(s) know. In turn, this means that the
+407   core developers' time tends to be well conserved, even with many collaborators.
+408
+409   Another characteristic of the open-source method that conserves developer time is the communication
+410   structure of typical open-source projects. Above I used the term "core developer"; this reflects a
+411   distinction between the project core (typically quite small; a single core developer is common, and
+412   one to three is typical) and the project halo of beta-testers and available contributors (which
+413   often numbers in the hundreds).
+414
+415   The fundamental problem that traditional software-development organization addresses is Brook's Law:
+416   "Adding more programmers to a late project makes it later." More generally, Brooks's Law predicts
+417   that the complexity and communication costs of a project rise with the square of the number of
+418   developers, while work done only rises linearly.
+419
+420   Brooks's Law is founded on experience that bugs tend strongly to cluster at the interfaces between
+421   code written by different people, and that communications/coordination overhead on a project tends
+422   to rise with the number of interfaces between human beings. Thus, problems scale with the number of
+423   communications paths between developers, which scales as the square of the humber of developers
+424   (more precisely, according to the formula N*(N - 1)/2 where N is the number of developers).
+425
+426   The Brooks's Law analysis (and the resulting fear of large numbers in development groups) rests on a
+427   hidden assummption: that the communications structure of the project is necessarily a complete
+428   graph, that everybody talks to everybody else. But on open-source projects, the halo developers work
+429   on what are in effect separable parallel subtasks and interact with each other very little; code
+430   changes and bug reports stream through the core group, and only within that small core group do we
+431   pay the full Brooksian overhead. [SU]
+432
+433   There are are still more reasons that source-code–level bug reporting tends to be very efficient.
+434   They center around the fact that a single error can often have multiple possible symptoms,
+435   manifesting differently depending on details of the user's usage pattern and environment. Such
+436   errors tend to be exactly the sort of complex and subtle bugs (such as dynamic-memory-management
+437   errors or nondeterministic interrupt-window artifacts) that are hardest to reproduce at will or to
+438   pin down by static analysis, and which do the most to create long-term problems in software.
+439
+440   A tester who sends in a tentative source-code–level characterization of such a multi-symptom bug
+441   (e.g. "It looks to me like there's a window in the signal handling near line 1250" or "Where are you
+442   zeroing that buffer?") may give a developer, otherwise too close to the code to see it, the critical
+443   clue to a half-dozen disparate symptoms. In cases like this, it may be hard or even impossible to
+444   know which externally-visible misbehaviour was caused by precisely which bug—but with frequent
+445   releases, it's unnecessary to know. Other collaborators will be likely to find out quickly whether
+446   their bug has been fixed or not. In many cases, source-level bug reports will cause misbehaviours to
+447   drop out without ever having been attributed to any specific fix.
+448
+449   Complex multi-symptom errors also tend to have multiple trace paths from surface symptoms back to
+450   the actual bug. Which of the trace paths a given developer or tester can chase may depend on
+451   subtleties of that person's environment, and may well change in a not obviously deterministic way
+452   over time. In effect, each developer and tester samples a semi-random set of the program's state
+453   space when looking for the etiology of a symptom. The more subtle and complex the bug, the less
+454   likely that skill will be able to guarantee the relevance of that sample.
+455
+456   For simple and easily reproducible bugs, then, the accent will be on the "semi" rather than the
+457   "random"; debugging skill and intimacy with the code and its architecture will matter a lot. But for
+458   complex bugs, the accent will be on the "random". Under these circumstances many people running
+459   traces will be much more effective than a few people running traces sequentially—even if the few
+460   have a much higher average skill level.
+461
+462   This effect will be greatly amplified if the difficulty of following trace paths from different
+463   surface symptoms back to a bug varies significantly in a way that can't be predicted by looking at
+464   the symptoms. A single developer sampling those paths sequentially will be as likely to pick a
+465   difficult trace path on the first try as an easy one. On the other hand, suppose many people are
+466   trying trace paths in parallel while doing rapid releases. Then it is likely one of them will find
+467   the easiest path immediately, and nail the bug in a much shorter time. The project maintainer will
+468   see that, ship a new release, and the other people running traces on the same bug will be able to
+469   stop before having spent too much time on their more difficult traces [RJ].
+470
+471   = When Is a Rose Not a Rose? =
+472
+473   Having studied Linus's behavior and formed a theory about why it was successful, I made a conscious
+474   decision to test this theory on my new (admittedly much less complex and ambitious) project.
+475
+476   But the first thing I did was reorganize and simplify popclient a lot. Carl Harris's implementation
+477   was very sound, but exhibited a kind of unnecessary complexity common to many C programmers. He
+478   treated the code as central and the data structures as support for the code. As a result, the code
+479   was beautiful but the data structure design ad-hoc and rather ugly (at least by the high standards
+480   of this veteran LISP hacker).
+481
+482   I had another purpose for rewriting besides improving the code and the data structure design,
+483   however. That was to evolve it into something I understood completely. It's no fun to be responsible
+484   for fixing bugs in a program you don't understand.
+485
+486   For the first month or so, then, I was simply following out the implications of Carl's basic design.
+487   The first serious change I made was to add IMAP support. I did this by reorganizing the protocol
+488   machines into a generic driver and three method tables (for POP2, POP3, and IMAP). This and the
+489   previous changes illustrate a general principle that's good for programmers to keep in mind,
+490   especially in languages like C that don't naturally do dynamic typing:
+491
+492       9. Smart data structures and dumb code works a lot better than the other way around.
+493
+494   Brooks, Chapter 9: "Show me your flowchart and conceal your tables, and I shall continue to be
+495   mystified. Show me your tables, and I won't usually need your flowchart; it'll be obvious." Allowing
+496   for thirty years of terminological/cultural shift, it's the same point.
+497
+498   At this point (early September 1996, about six weeks from zero) I started thinking that a name
+499   change might be in order—after all, it wasn't just a POP client any more. But I hesitated, because
+500   there was as yet nothing genuinely new in the design. My version of popclient had yet to develop an
+501   identity of its own.
+502
+503   That changed, radically, when popclient learned how to forward fetched mail to the SMTP port. I'll
+504   get to that in a moment. But first: I said earlier that I'd decided to use this project to test my
+505   theory about what Linus Torvalds had done right. How (you may well ask) did I do that? In these
+506   ways:
+507
+508       * I released early and often (almost never less often than every ten days; during periods of
+509         intense development, once a day).
+510
+511       * I grew my beta list by adding to it everyone who contacted me about fetchmail.
+512
+513       * I sent chatty announcements to the beta list whenever I released, encouraging people to
+514         participate.
+515
+516       * And I listened to my beta-testers, polling them about design decisions and stroking them
+517         whenever they sent in patches and feedback.
+518
+519   The payoff from these simple measures was immediate. From the beginning of the project, I got bug
+520   reports of a quality most developers would kill for, often with good fixes attached. I got
+521   thoughtful criticism, I got fan mail, I got intelligent feature suggestions. Which leads to:
+522
+523       10. If you treat your beta-testers as if they're your most valuable resource, they will respond
+524           by becoming your most valuable resource.
+525
+526   One interesting measure of fetchmail's success is the sheer size of the project beta list,
+527   fetchmail-friends. At the time of latest revision of this paper (November 2000) it has 287 members
+528   and is adding two or three a week.
+529
+530   Actually, when I revised in late May 1997 I found the list was beginning to lose members from its
+531   high of close to 300 for an interesting reason. Several people have asked me to unsubscribe them
+532   because fetchmail is working so well for them that they no longer need to see the list traffic!
+533   Perhaps this is part of the normal life-cycle of a mature bazaar-style project.
+534
+535   = Popclient becomes Fetchmail =
+536
+537   The real turning point in the project was when Harry Hochheiser sent me his scratch code for
+538   forwarding mail to the client machine's SMTP port. I realized almost immediately that a reliable
+539   implementation of this feature would make all the other mail delivery modes next to obsolete.
+540
+541   For many weeks I had been tweaking fetchmail rather incrementally while feeling like the interface
+542   design was serviceable but grubby—inelegant and with too many exiguous options hanging out all over.
+543   The options to dump fetched mail to a mailbox file or standard output particularly bothered me, but
+544   I couldn't figure out why.
+545
+546   (If you don't care about the technicalia of Internet mail, the next two paragraphs can be safely
+547   skipped.)
+548
+549   What I saw when I thought about SMTP forwarding was that popclient had been trying to do too many
+550   things. It had been designed to be both a mail transport agent (MTA) and a local delivery agent
+551   (MDA). With SMTP forwarding, it could get out of the MDA business and be a pure MTA, handing off
+552   mail to other programs for local delivery just as sendmail does.
+553
+554   Why mess with all the complexity of configuring a mail delivery agent or setting up lock-and-append
+555   on a mailbox when port 25 is almost guaranteed to be there on any platform with TCP/IP support in
+556   the first place? Especially when this means retrieved mail is guaranteed to look like normal
+557   sender-initiated SMTP mail, which is really what we want anyway.
+558
+559   (Back to a higher level....)
+560
+561   Even if you didn't follow the preceding technical jargon, there are several important lessons here.
+562   First, this SMTP-forwarding concept was the biggest single payoff I got from consciously trying to
+563   emulate Linus's methods. A user gave me this terrific idea—all I had to do was understand the
+564   implications.
+565
+566       11. The next best thing to having good ideas is recognizing good ideas from your users.
+567           Sometimes the latter is better.
+568
+569   Interestingly enough, you will quickly find that if you are completely and self-deprecatingly
+570   truthful about how much you owe other people, the world at large will treat you as though you did
+571   every bit of the invention yourself and are just being becomingly modest about your innate genius.
+572   We can all see how well this worked for Linus!
+573
+574   (When I gave my talk at the first Perl Conference in August 1997, hacker extraordinaire Larry Wall
+575   was in the front row.  As I got to the last line above he called out, religious-revival style, "Tell
+576   it, tell it, brother!". The whole audience laughed, because they knew this had worked for the
+577   inventor of Perl, too.)
+578
+579   After a very few weeks of running the project in the same spirit, I began to get similar praise not
+580   just from my users but from other people to whom the word leaked out. I stashed away some of that
+581   email; I'll look at it again sometime if I ever start wondering whether my life has been worthwhile
+582   :-).
+583
+584   But there are two more fundamental, non-political lessons here that are general to all kinds of
+585   design.
+586
+587       12. Often, the most striking and innovative solutions come from realizing that your concept of
+588           the problem was wrong.
+589
+590   I had been trying to solve the wrong problem by continuing to develop popclient as a combined
+591   MTA/MDA with all kinds of funky local delivery modes. Fetchmail's design needed to be rethought from
+592   the ground up as a pure MTA, a part of the normal SMTP-speaking Internet mail path.
+593
+594   When you hit a wall in development—when you find yourself hard put to think past the next patch—it's
+595   often time to ask not whether you've got the right answer, but whether you're asking the right
+596   question. Perhaps the problem needs to be reframed.
+597
+598   Well, I had reframed my problem. Clearly, the right thing to do was (1) hack SMTP forwarding support
+599   into the generic driver, (2) make it the default mode, and (3) eventually throw out all the other
+600   delivery modes, especially the deliver-to-file and deliver-to-standard-output options.
+601
+602   I hesitated over step 3 for some time, fearing to upset long-time popclient users dependent on the
+603   alternate delivery mechanisms. In theory, they could immediately switch to .forward files or their
+604   non-sendmail equivalents to get the same effects. In practice the transition might have been messy.
+605
+606   But when I did it, the benefits proved huge. The cruftiest parts of the driver code vanished.
+607   Configuration got radically simpler—no more grovelling around for the system MDA and user's mailbox,
+608   no more worries about whether the underlying OS supports file locking.
+609
+610   Also, the only way to lose mail vanished. If you specified delivery to a file and the disk got full,
+611   your mail got lost.  This can't happen with SMTP forwarding because your SMTP listener won't return
+612   OK unless the message can be delivered or at least spooled for later delivery.
+613
+614   Also, performance improved (though not so you'd notice it in a single run). Another not
+615   insignificant benefit of this change was that the manual page got a lot simpler.
+616
+617   Later, I had to bring delivery via a user-specified local MDA back in order to allow handling of
+618   some obscure situations involving dynamic SLIP. But I found a much simpler way to do it.
+619
+620   The moral? Don't hesitate to throw away superannuated features when you can do it without loss of
+621   effectiveness. Antoine de Saint-Exupéry (who was an aviator and aircraft designer when he wasn't
+622   authoring classic children's books) said:
+623
+624       13. "Perfection (in design) is achieved not when there is nothing more to add, but rather when
+625           there is nothing more to take away."
+626
+627   When your code is getting both better and simpler, that is when you know it's right. And in the
+628   process, the fetchmail design acquired an identity of its own, different from the ancestral
+629   popclient.
+630
+631   It was time for the name change. The new design looked much more like a dual of sendmail than the
+632   old popclient had; both are MTAs, but where sendmail pushes then delivers, the new popclient pulls
+633   then delivers. So, two months off the blocks, I renamed it fetchmail.
+634
+635   There is a more general lesson in this story about how SMTP delivery came to fetchmail. It is not
+636   only debugging that is parallelizable; development and (to a perhaps surprising extent) exploration
+637   of design space is, too. When your development mode is rapidly iterative, development and
+638   enhancement may become special cases of debugging—fixing 'bugs of omission' in the original
+639   capabilities or concept of the software.
+640
+641   Even at a higher level of design, it can be very valuable to have lots of co-developers
+642   random-walking through the design space near your product. Consider the way a puddle of water finds
+643   a drain, or better yet how ants find food: exploration essentially by diffusion, followed by
+644   exploitation mediated by a scalable communication mechanism. This works very well; as with Harry
+645   Hochheiser and me, one of your outriders may well find a huge win nearby that you were just a little
+646   too close-focused to see.
+647
+648   = Fetchmail Grows Up =
+649
+650   There I was with a neat and innovative design, code that I knew worked well because I used it every
+651   day, and a burgeoning beta list. It gradually dawned on me that I was no longer engaged in a trivial
+652   personal hack that might happen to be useful to few other people. I had my hands on a program that
+653   every hacker with a Unix box and a SLIP/PPP mail connection really needs.
+654
+655   With the SMTP forwarding feature, it pulled far enough in front of the competition to potentially
+656   become a "category killer", one of those classic programs that fills its niche so competently that
+657   the alternatives are not just discarded but almost forgotten.
+658
+659   I think you can't really aim or plan for a result like this. You have to get pulled into it by
+660   design ideas so powerful that afterward the results just seem inevitable, natural, even
+661   foreordained. The only way to try for ideas like that is by having lots of ideas—or by having the
+662   engineering judgment to take other peoples' good ideas beyond where the originators thought they
+663   could go.
+664
+665   Andy Tanenbaum had the original idea to build a simple native Unix for IBM PCs, for use as a
+666   teaching tool (he called it Minix). Linus Torvalds pushed the Minix concept further than Andrew
+667   probably thought it could go—and it grew into something wonderful. In the same way (though on a
+668   smaller scale), I took some ideas by Carl Harris and Harry Hochheiser and pushed them hard. Neither
+669   of us was 'original' in the romantic way people think is genius. But then, most science and
+670   engineering and software development isn't done by original genius, hacker mythology to the
+671   contrary.
+672
+673   The results were pretty heady stuff all the same—in fact, just the kind of success every hacker
+674   lives for! And they meant I would have to set my standards even higher. To make fetchmail as good as
+675   I now saw it could be, I'd have to write not just for my own needs, but also include and support
+676   features necessary to others but outside my orbit. And do that while keeping the program simple and
+677   robust.
+678
+679   The first and overwhelmingly most important feature I wrote after realizing this was multidrop
+680   support—the ability to fetch mail from mailboxes that had accumulated all mail for a group of users,
+681   and then route each piece of mail to its individual recipients.
+682
+683   I decided to add the multidrop support partly because some users were clamoring for it, but mostly
+684   because I thought it would shake bugs out of the single-drop code by forcing me to deal with
+685   addressing in full generality. And so it proved.  Getting RFC 822 address parsing right took me a
+686   remarkably long time, not because any individual piece of it is hard but because it involved a pile
+687   of interdependent and fussy details.
+688
+689   But multidrop addressing turned out to be an excellent design decision as well. Here's how I knew:
+690
+691       14. Any tool should be useful in the expected way, but a truly great tool lends itself to uses
+692           you never expected.
+693
+694   The unexpected use for multidrop fetchmail is to run mailing lists with the list kept, and alias
+695   expansion done, on the client side of the Internet connection. This means someone running a personal
+696   machine through an ISP account can manage a mailing list without continuing access to the ISP's
+697   alias files.
+698
+699   Another important change demanded by my beta-testers was support for 8-bit MIME (Multipurpose
+700   Internet Mail Extensions) operation. This was pretty easy to do, because I had been careful to keep
+701   the code 8-bit clean (that is, to not press the 8th bit, unused in the ASCII character set, into
+702   service to carry information within the program). Not because I anticipated the demand for this
+703   feature, but rather in obedience to another rule:
+704
+705       15. When writing gateway software of any kind, take pains to disturb the data stream as little
+706           as possible—and never throw away information unless the recipient forces you to!
+707
+708   Had I not obeyed this rule, 8-bit MIME support would have been difficult and buggy. As it was, all I
+709   had to do is read the MIME standard (RFC 1652) and add a trivial bit of header-generation logic.
+710
+711   Some European users bugged me into adding an option to limit the number of messages retrieved per
+712   session (so they can control costs from their expensive phone networks). I resisted this for a long
+713   time, and I'm still not entirely happy about it. But if you're writing for the world, you have to
+714   listen to your customers—this doesn't change just because they're not paying you in money.
+715
+716   = A Few More Lessons from Fetchmail =
+717
+718   Before we go back to general software-engineering issues, there are a couple more specific lessons
+719   from the fetchmail experience to ponder. Nontechnical readers can safely skip this section.
+720
+721   The rc (control) file syntax includes optional 'noise' keywords that are entirely ignored by the
+722   parser. The English-like syntax they allow is considerably more readable than the traditional terse
+723   keyword-value pairs you get when you strip them all out.
+724
+725   These started out as a late-night experiment when I noticed how much the rc file declarations were
+726   beginning to resemble an imperative minilanguage. (This is also why I changed the original popclient
+727   "server" keyword to "poll").
+728
+729   It seemed to me that trying to make that imperative minilanguage more like English might make it
+730   easier to use. Now, although I'm a convinced partisan of the "make it a language" school of design
+731   as exemplified by Emacs and HTML and many database engines, I am not normally a big fan of
+732   "English-like" syntaxes.
+733
+734   Traditionally programmers have tended to favor control syntaxes that are very precise and compact
+735   and have no redundancy at all. This is a cultural legacy from when computing resources were
+736   expensive, so parsing stages had to be as cheap and simple as possible. English, with about 50%
+737   redundancy, looked like a very inappropriate model then.
+738
+739   This is not my reason for normally avoiding English-like syntaxes; I mention it here only to
+740   demolish it. With cheap cycles and core, terseness should not be an end in itself. Nowadays it's
+741   more important for a language to be convenient for humans than to be cheap for the computer.
+742
+743   There remain, however, good reasons to be wary. One is the complexity cost of the parsing stage—you
+744   don't want to raise that to the point where it's a significant source of bugs and user confusion in
+745   itself. Another is that trying to make a language syntax English-like often demands that the
+746   "English" it speaks be bent seriously out of shape, so much so that the superficial resemblance to
+747   natural language is as confusing as a traditional syntax would have been. (You see this bad effect
+748   in a lot of so-called "fourth generation" and commercial database-query languages.)
+749
+750   The fetchmail control syntax seems to avoid these problems because the language domain is extremely
+751   restricted. It's nowhere near a general-purpose language; the things it says simply are not very
+752   complicated, so there's little potential for confusion in moving mentally between a tiny subset of
+753   English and the actual control language. I think there may be a broader lesson here:
+754
+755       16. When your language is nowhere near Turing-complete, syntactic sugar can be your friend.
+756
+757   Another lesson is about security by obscurity. Some fetchmail users asked me to change the software
+758   to store passwords encrypted in the rc file, so snoopers wouldn't be able to casually see them.
+759
+760   I didn't do it, because this doesn't actually add protection. Anyone who's acquired permissions to
+761   read your rc file will be able to run fetchmail as you anyway—and if it's your password they're
+762   after, they'd be able to rip the necessary decoder out of the fetchmail code itself to get it.
+763
+764   All .fetchmailrc password encryption would have done is give a false sense of security to people who
+765   don't think very hard. The general rule here is:
+766
+767       17. A security system is only as secure as its secret. Beware of pseudo-secrets.
+768
+769
+770   = Necessary Preconditions for the Bazaar Style =
+771
+772   Early reviewers and test audiences for this essay consistently raised questions about the
+773   preconditions for successful bazaar-style development, including both the qualifications of the
+774   project leader and the state of code at the time one goes public and starts to try to build a
+775   co-developer community.
+776
+777   It's fairly clear that one cannot code from the ground up in bazaar style [IN]. One can test, debug
+778   and improve in bazaar style, but it would be very hard to originate a project in bazaar mode. Linus
+779   didn't try it. I didn't either.  Your nascent developer community needs to have something runnable
+780   and testable to play with.
+781
+782   When you start community-building, what you need to be able to present is a plausible promise. Your
+783   program doesn't have to work particularly well. It can be crude, buggy, incomplete, and poorly
+784   documented. What it must not fail to do is (a) run, and (b) convince potential co-developers that it
+785   can be evolved into something really neat in the foreseeable future.
+786
+787   Linux and fetchmail both went public with strong, attractive basic designs. Many people thinking
+788   about the bazaar model as I have presented it have correctly considered this critical, then jumped
+789   from that to the conclusion that a high degree of design intuition and cleverness in the project
+790   leader is indispensable.
+791
+792   But Linus got his design from Unix. I got mine initially from the ancestral popclient (though it
+793   would later change a great deal, much more proportionately speaking than has Linux). So does the
+794   leader/coordinator for a bazaar-style effort really have to have exceptional design talent, or can
+795   he get by through leveraging the design talent of others?
+796
+797   I think it is not critical that the coordinator be able to originate designs of exceptional
+798   brilliance, but it is absolutely critical that the coordinator be able to recognize good design
+799   ideas from others.
+800
+801   Both the Linux and fetchmail projects show evidence of this. Linus, while not (as previously
+802   discussed) a spectacularly original designer, has displayed a powerful knack for recognizing good
+803   design and integrating it into the Linux kernel.  And I have already described how the single most
+804   powerful design idea in fetchmail (SMTP forwarding) came from somebody else.
+805
+806   Early audiences of this essay complimented me by suggesting that I am prone to undervalue design
+807   originality in bazaar projects because I have a lot of it myself, and therefore take it for granted.
+808   There may be some truth to this; design (as opposed to coding or debugging) is certainly my
+809   strongest skill.
+810
+811   But the problem with being clever and original in software design is that it gets to be a habit—you
+812   start reflexively making things cute and complicated when you should be keeping them robust and
+813   simple. I have had projects crash on me because I made this mistake, but I managed to avoid this
+814   with fetchmail.
+815
+816   So I believe the fetchmail project succeeded partly because I restrained my tendency to be clever;
+817   this argues (at least) against design originality being essential for successful bazaar projects.
+818   And consider Linux. Suppose Linus Torvalds had been trying to pull off fundamental innovations in
+819   operating system design during the development; does it seem at all likely that the resulting kernel
+820   would be as stable and successful as what we have?
+821
+822   A certain base level of design and coding skill is required, of course, but I expect almost anybody
+823   seriously thinking of launching a bazaar effort will already be above that minimum. The open-source
+824   community's internal market in reputation exerts subtle pressure on people not to launch development
+825   efforts they're not competent to follow through on. So far this seems to have worked pretty well.
+826
+827   There is another kind of skill not normally associated with software development which I think is as
+828   important as design cleverness to bazaar projects—and it may be more important. A bazaar project
+829   coordinator or leader must have good people and communications skills.
+830
+831   This should be obvious. In order to build a development community, you need to attract people,
+832   interest them in what you're doing, and keep them happy about the amount of work they're doing.
+833   Technical sizzle will go a long way towards accomplishing this, but it's far from the whole story.
+834   The personality you project matters, too.
+835
+836   It is not a coincidence that Linus is a nice guy who makes people like him and want to help him.
+837   It's not a coincidence that I'm an energetic extrovert who enjoys working a crowd and has some of
+838   the delivery and instincts of a stand-up comic. To make the bazaar model work, it helps enormously
+839   if you have at least a little skill at charming people.
+840
+841   = The Social Context of Open-Source Software =
+842
+843   It is truly written: the best hacks start out as personal solutions to the author's everyday
+844   problems, and spread because the problem turns out to be typical for a large class of users. This
+845   takes us back to the matter of rule 1, restated in a perhaps more useful way:
+846
+847       18. To solve an interesting problem, start by finding a problem that is interesting to you.
+848
+849   So it was with Carl Harris and the ancestral popclient, and so with me and fetchmail. But this has
+850   been understood for a long time. The interesting point, the point that the histories of Linux and
+851   fetchmail seem to demand we focus on, is the next stage—the evolution of software in the presence of
+852   a large and active community of users and co-developers.
+853
+854   In The Mythical Man-Month, Fred Brooks observed that programmer time is not fungible; adding
+855   developers to a late software project makes it later. As we've seen previously, he argued that the
+856   complexity and communication costs of a project rise with the square of the number of developers,
+857   while work done only rises linearly. Brooks's Law has been widely regarded as a truism. But we've
+858   examined in this essay an number of ways in which the process of open-source development falsifies
+859   the assumptionms behind it—and, empirically, if Brooks's Law were the whole picture Linux would be
+860   impossible.
+861
+862   Gerald Weinberg's classic The Psychology of Computer Programming supplied what, in hindsight, we can
+863   see as a vital correction to Brooks. In his discussion of "egoless programming", Weinberg observed
+864   that in shops where developers are not territorial about their code, and encourage other people to
+865   look for bugs and potential improvements in it, improvement happens dramatically faster than
+866   elsewhere. (Recently, Kent Beck's 'extreme programming' technique of deploying coders in pairs
+867   looking over one anothers' shoulders might be seen as an attempt to force this effect.)
+868
+869   Weinberg's choice of terminology has perhaps prevented his analysis from gaining the acceptance it
+870   deserved—one has to smile at the thought of describing Internet hackers as "egoless". But I think
+871   his argument looks more compelling today than ever.
+872
+873   The bazaar method, by harnessing the full power of the "egoless programming" effect, strongly
+874   mitigates the effect of Brooks's Law. The principle behind Brooks's Law is not repealed, but given a
+875   large developer population and cheap communications its effects can be swamped by competing
+876   nonlinearities that are not otherwise visible. This resembles the relationship between Newtonian and
+877   Einsteinian physics—the older system is still valid at low energies, but if you push mass and
+878   velocity high enough you get surprises like nuclear explosions or Linux.
+879
+880   The history of Unix should have prepared us for what we're learning from Linux (and what I've
+881   verified experimentally on a smaller scale by deliberately copying Linus's methods [EGCS]). That is,
+882   while coding remains an essentially solitary activity, the really great hacks come from harnessing
+883   the attention and brainpower of entire communities. The developer who uses only his or her own brain
+884   in a closed project is going to fall behind the developer who knows how to create an open,
+885   evolutionary context in which feedback exploring the design space, code contributions, bug-spotting,
+886   and other improvements come from from hundreds (perhaps thousands) of people.
+887
+888   But the traditional Unix world was prevented from pushing this approach to the ultimate by several
+889   factors. One was the legal contraints of various licenses, trade secrets, and commercial interests.
+890   Another (in hindsight) was that the Internet wasn't yet good enough.
+891
+892   Before cheap Internet, there were some geographically compact communities where the culture
+893   encouraged Weinberg's "egoless" programming, and a developer could easily attract a lot of skilled
+894   kibitzers and co-developers. Bell Labs, the MIT AI and LCS labs, UC Berkeley—these became the home
+895   of innovations that are legendary and still potent.
+896
+897   Linux was the first project for which a conscious and successful effort to use the entire world as
+898   its talent pool was made. I don't think it's a coincidence that the gestation period of Linux
+899   coincided with the birth of the World Wide Web, and that Linux left its infancy during the same
+900   period in 1993–1994 that saw the takeoff of the ISP industry and the explosion of mainstream
+901   interest in the Internet. Linus was the first person who learned how to play by the new rules that
+902   pervasive Internet access made possible.
+903
+904   While cheap Internet was a necessary condition for the Linux model to evolve, I think it was not by
+905   itself a sufficient condition. Another vital factor was the development of a leadership style and
+906   set of cooperative customs that could allow developers to attract co-developers and get maximum
+907   leverage out of the medium.
+908
+909   But what is this leadership style and what are these customs? They cannot be based on power
+910   relationships—and even if they could be, leadership by coercion would not produce the results we
+911   see. Weinberg quotes the autobiography of the 19th-century Russian anarchist Pyotr Alexeyvich
+912   Kropotkin's Memoirs of a Revolutionist to good effect on this subject:
+913
+914   Having been brought up in a serf-owner's family, I entered active life, like all young men of my
+915   time, with a great deal of confidence in the necessity of commanding, ordering, scolding, punishing
+916   and the like. But when, at an early stage, I had to manage serious enterprises and to deal with
+917   [free] men, and when each mistake would lead at once to heavy consequences, I began to appreciate
+918   the difference between acting on the principle of command and discipline and acting on the principle
+919   of common understanding. The former works admirably in a military parade, but it is worth nothing
+920   where real life is concerned, and the aim can be achieved only through the severe effort of many
+921   converging wills.
+922
+923   The "severe effort of many converging wills" is precisely what a project like Linux requires—and the
+924   "principle of command" is effectively impossible to apply among volunteers in the anarchist's
+925   paradise we call the Internet. To operate and compete effectively, hackers who want to lead
+926   collaborative projects have to learn how to recruit and energize effective communities of interest
+927   in the mode vaguely suggested by Kropotkin's "principle of understanding".  They must learn to use
+928   Linus's Law.[SP]
+929
+930   Earlier I referred to the "Delphi effect" as a possible explanation for Linus's Law. But more
+931   powerful analogies to adaptive systems in biology and economics also irresistably suggest
+932   themselves. The Linux world behaves in many respects like a free market or an ecology, a collection
+933   of selfish agents attempting to maximize utility which in the process produces a self-correcting
+934   spontaneous order more elaborate and efficient than any amount of central planning could have
+935   achieved. Here, then, is the place to seek the "principle of understanding".
+936
+937   The "utility function" Linux hackers are maximizing is not classically economic, but is the
+938   intangible of their own ego satisfaction and reputation among other hackers. (One may call their
+939   motivation "altruistic", but this ignores the fact that altruism is itself a form of ego
+940   satisfaction for the altruist). Voluntary cultures that work this way are not actually uncommon; one
+941   other in which I have long participated is science fiction fandom, which unlike hackerdom has long
+942   explicitly recognized "egoboo" (ego-boosting, or the enhancement of one's reputation among other
+943   fans) as the basic drive behind volunteer activity.
+944
+945   Linus, by successfully positioning himself as the gatekeeper of a project in which the development
+946   is mostly done by others, and nurturing interest in the project until it became self-sustaining, has
+947   shown an acute grasp of Kropotkin's "principle of shared understanding". This quasi-economic view of
+948   the Linux world enables us to see how that understanding is applied.
+949
+950   We may view Linus's method as a way to create an efficient market in "egoboo"—to connect the
+951   selfishness of individual hackers as firmly as possible to difficult ends that can only be achieved
+952   by sustained cooperation. With the fetchmail project I have shown (albeit on a smaller scale) that
+953   his methods can be duplicated with good results. Perhaps I have even done it a bit more consciously
+954   and systematically than he.
+955
+956   Many people (especially those who politically distrust free markets) would expect a culture of
+957   self-directed egoists to be fragmented, territorial, wasteful, secretive, and hostile. But this
+958   expectation is clearly falsified by (to give just one example) the stunning variety, quality, and
+959   depth of Linux documentation. It is a hallowed given that programmers hate documenting; how is it,
+960   then, that Linux hackers generate so much documentation? Evidently Linux's free market in egoboo
+961   works better to produce virtuous, other-directed behavior than the massively-funded documentation
+962   shops of commercial software producers.
+963
+964   Both the fetchmail and Linux kernel projects show that by properly rewarding the egos of many other
+965   hackers, a strong developer/coordinator can use the Internet to capture the benefits of having lots
+966   of co-developers without having a project collapse into a chaotic mess. So to Brooks's Law I
+967   counter-propose the following:
+968
+969       19: Provided the development coordinator has a communications medium at least as good as the
+970           Internet, and knows how to lead without coercion, many heads are inevitably better than one.
+971
+972   I think the future of open-source software will increasingly belong to people who know how to play
+973   Linus's game, people who leave behind the cathedral and embrace the bazaar. This is not to say that
+974   individual vision and brilliance will no longer matter; rather, I think that the cutting edge of
+975   open-source software will belong to people who start from individual vision and brilliance, then
+976   amplify it through the effective construction of voluntary communities of interest.
+977
+978   Perhaps this is not only the future of open-source software. No closed-source developer can match
+979   the pool of talent the Linux community can bring to bear on a problem. Very few could afford even to
+980   hire the more than 200 (1999: 600, 2000: 800) people who have contributed to fetchmail!
+981
+982   Perhaps in the end the open-source culture will triumph not because cooperation is morally right or
+983   software "hoarding" is morally wrong (assuming you believe the latter, which neither Linus nor I
+984   do), but simply because the closed-source world cannot win an evolutionary arms race with
+985   open-source communities that can put orders of magnitude more skilled time into a problem.
+986
+987   = On Management and the Maginot Line =
+988
+989   The original Cathedral and Bazaar paper of 1997 ended with the vision above—that of happy networked
+990   hordes of programmer/anarchists outcompeting and overwhelming the hierarchical world of conventional
+991   closed software.
+992
+993   A good many skeptics weren't convinced, however; and the questions they raise deserve a fair
+994   engagement. Most of the objections to the bazaar argument come down to the claim that its proponents
+995   have underestimated the productivity-multiplying effect of conventional management.
+996
+997   Traditionally-minded software-development managers often object that the casualness with which
+998   project groups form and change and dissolve in the open-source world negates a significant part of
+999   the apparent advantage of numbers that the open-source community has over any single closed-source
+1000  developer. They would observe that in software development it is really sustained effort over time
+1001  and the degree to which customers can expect continuing investment in the product that matters, not
+1002  just how many people have thrown a bone in the pot and left it to simmer.
+1003
+1004  There is something to this argument, to be sure; in fact, I have developed the idea that expected
+1005  future service value is the key to the economics of software production in the essay The Magic
+1006  Cauldron.
+1007
+1008  But this argument also has a major hidden problem; its implicit assumption that open-source
+1009  development cannot deliver such sustained effort. In fact, there have been open-source projects that
+1010  maintained a coherent direction and an effective maintainer community over quite long periods of
+1011  time without the kinds of incentive structures or institutional controls that conventional
+1012  management finds essential. The development of the GNU Emacs editor is an extreme and instructive
+1013  example; it has absorbed the efforts of hundreds of contributors over 15 years into a unified
+1014  architectural vision, despite high turnover and the fact that only one person (its author) has been
+1015  continuously active during all that time. No closed-source editor has ever matched this longevity
+1016  record.
+1017
+1018  This suggests a reason for questioning the advantages of conventionally-managed software development
+1019  that is independent of the rest of the arguments over cathedral vs. bazaar mode. If it's possible
+1020  for GNU Emacs to express a consistent architectural vision over 15 years, or for an operating system
+1021  like Linux to do the same over 8 years of rapidly changing hardware and platform technology; and if
+1022  (as is indeed the case) there have been many well-architected open-source projects of more than 5
+1023  years duration -- then we are entitled to wonder what, if anything, the tremendous overhead of
+1024  conventionally-managed development is actually buying us.
+1025
+1026  Whatever it is certainly doesn't include reliable execution by deadline, or on budget, or to all
+1027  features of the specification; it's a rare 'managed' project that meets even one of these goals, let
+1028  alone all three. It also does not appear to be ability to adapt to changes in technology and
+1029  economic context during the project lifetime, either; the open-source community has proven far more
+1030  effective on that score (as one can readily verify, for example, by comparing the 30-year history of
+1031  the Internet with the short half-lives of proprietary networking technologies—or the cost of the
+1032  16-bit to 32-bit transition in Microsoft Windows with the nearly effortless upward migration of
+1033  Linux during the same period, not only along the Intel line of development but to more than a dozen
+1034  other hardware platforms, including the 64-bit Alpha as well).
+1035
+1036  One thing many people think the traditional mode buys you is somebody to hold legally liable and
+1037  potentially recover compensation from if the project goes wrong. But this is an illusion; most
+1038  software licenses are written to disclaim even warranty of merchantability, let alone
+1039  performance—and cases of successful recovery for software nonperformance are vanishingly rare. Even
+1040  if they were common, feeling comforted by having somebody to sue would be missing the point. You
+1041  didn't want to be in a lawsuit; you wanted working software.
+1042
+1043  So what is all that management overhead buying?
+1044
+1045  In order to understand that, we need to understand what software development managers believe they
+1046  do. A woman I know who seems to be very good at this job says software project management has five
+1047  functions:
+1048
+1049      * To define goals and keep everybody pointed in the same direction
+1050
+1051      * To monitor and make sure crucial details don't get skipped
+1052
+1053      * To motivate people to do boring but necessary drudgework
+1054
+1055      * To organize the deployment of people for best productivity
+1056
+1057      * To marshal resources needed to sustain the project
+1058
+1059  Apparently worthy goals, all of these; but under the open-source model, and in its surrounding
+1060  social context, they can begin to seem strangely irrelevant. We'll take them in reverse order.
+1061
+1062  My friend reports that a lot of resource marshalling is basically defensive; once you have your
+1063  people and machines and office space, you have to defend them from peer managers competing for the
+1064  same resources, and from higher-ups trying to allocate the most efficient use of a limited pool.
+1065
+1066  But open-source developers are volunteers, self-selected for both interest and ability to contribute
+1067  to the projects they work on (and this remains generally true even when they are being paid a salary
+1068  to hack open source.) The volunteer ethos tends to take care of the 'attack' side of
+1069  resource-marshalling automatically; people bring their own resources to the table. And there is
+1070  little or no need for a manager to 'play defense' in the conventional sense.
+1071
+1072  Anyway, in a world of cheap PCs and fast Internet links, we find pretty consistently that the only
+1073  really limiting resource is skilled attention. Open-source projects, when they founder, essentially
+1074  never do so for want of machines or links or office space; they die only when the developers
+1075  themselves lose interest.
+1076
+1077  That being the case, it's doubly important that open-source hackers organize themselves for maximum
+1078  productivity by self-selection—and the social milieu selects ruthlessly for competence. My friend,
+1079  familiar with both the open-source world and large closed projects, believes that open source has
+1080  been successful partly because its culture only accepts the most talented 5% or so of the
+1081  programming population. She spends most of her time organizing the deployment of the other 95%, and
+1082  has thus observed first-hand the well-known variance of a factor of one hundred in productivity
+1083  between the most able programmers and the merely competent.
+1084
+1085  The size of that variance has always raised an awkward question: would individual projects, and the
+1086  field as a whole, be better off without more than 50% of the least able in it? Thoughtful managers
+1087  have understood for a long time that if conventional software management's only function were to
+1088  convert the least able from a net loss to a marginal win, the game might not be worth the candle.
+1089
+1090  The success of the open-source community sharpens this question considerably, by providing hard
+1091  evidence that it is often cheaper and more effective to recruit self-selected volunteers from the
+1092  Internet than it is to manage buildings full of people who would rather be doing something else.
+1093
+1094  Which brings us neatly to the question of motivation. An equivalent and often-heard way to state my
+1095  friend's point is that traditional development management is a necessary compensation for poorly
+1096  motivated programmers who would not otherwise turn out good work.
+1097
+1098  This answer usually travels with a claim that the open-source community can only be relied on only
+1099  to do work that is 'sexy' or technically sweet; anything else will be left undone (or done only
+1100  poorly) unless it's churned out by money-motivated cubicle peons with managers cracking whips over
+1101  them. I address the psychological and social reasons for being skeptical of this claim in
+1102  Homesteading the Noosphere. For present purposes, however, I think it's more interesting to point
+1103  out the implications of accepting it as true.
+1104
+1105  If the conventional, closed-source, heavily-managed style of software development is really defended
+1106  only by a sort of Maginot Line of problems conducive to boredom, then it's going to remain viable in
+1107  each individual application area for only so long as nobody finds those problems really interesting
+1108  and nobody else finds any way to route around them.  Because the moment there is open-source
+1109  competition for a 'boring' piece of software, customers are going to know that it was finally
+1110  tackled by someone who chose that problem to solve because of a fascination with the problem
+1111  itself—which, in software as in other kinds of creative work, is a far more effective motivator than
+1112  money alone.
+1113
+1114  Having a conventional management structure solely in order to motivate, then, is probably good
+1115  tactics but bad strategy; a short-term win, but in the longer term a surer loss.
+1116
+1117  So far, conventional development management looks like a bad bet now against open source on two
+1118  points (resource marshalling, organization), and like it's living on borrowed time with respect to a
+1119  third (motivation). And the poor beleaguered conventional manager is not going to get any succour
+1120  from the monitoring issue; the strongest argument the open-source community has is that
+1121  decentralized peer review trumps all the conventional methods for trying to ensure that details
+1122  don't get slipped.
+1123
+1124  Can we save defining goals as a justification for the overhead of conventional software project
+1125  management? Perhaps; but to do so, we'll need good reason to believe that management committees and
+1126  corporate roadmaps are more successful at defining worthy and widely shared goals than the project
+1127  leaders and tribal elders who fill the analogous role in the open-source world.
+1128
+1129  That is on the face of it a pretty hard case to make. And it's not so much the open-source side of
+1130  the balance (the longevity of Emacs, or Linus Torvalds's ability to mobilize hordes of developers
+1131  with talk of "world domination") that makes it tough. Rather, it's the demonstrated awfulness of
+1132  conventional mechanisms for defining the goals of software projects.
+1133
+1134  One of the best-known folk theorems of software engineering is that 60% to 75% of conventional
+1135  software projects either are never completed or are rejected by their intended users. If that range
+1136  is anywhere near true (and I've never met a manager of any experience who disputes it) then more
+1137  projects than not are being aimed at goals that are either (a) not realistically attainable, or (b)
+1138  just plain wrong.
+1139
+1140  This, more than any other problem, is the reason that in today's software engineering world the very
+1141  phrase "management committee" is likely to send chills down the hearer's spine—even (or perhaps
+1142  especially) if the hearer is a manager. The days when only programmers griped about this pattern are
+1143  long past; Dilbert cartoons hang over executives' desks now.
+1144
+1145  Our reply, then, to the traditional software development manager, is simple—if the open-source
+1146  community has really underestimated the value of conventional management, why do so many of you
+1147  display contempt for your own process?
+1148
+1149  Once again the example of the open-source community sharpens this question considerably—because we
+1150  have fun doing what we do. Our creative play has been racking up technical, market-share, and
+1151  mind-share successes at an astounding rate.  We're proving not only that we can do better software,
+1152  but that joy is an asset.
+1153
+1154  Two and a half years after the first version of this essay, the most radical thought I can offer to
+1155  close with is no longer a vision of an open-source–dominated software world; that, after all, looks
+1156  plausible to a lot of sober people in suits these days.
+1157
+1158  Rather, I want to suggest what may be a wider lesson about software, (and probably about every kind
+1159  of creative or professional work). Human beings generally take pleasure in a task when it falls in a
+1160  sort of optimal-challenge zone; not so easy as to be boring, not too hard to achieve. A happy
+1161  programmer is one who is neither underutilized nor weighed down with ill-formulated goals and
+1162  stressful process friction. Enjoyment predicts efficiency.
+1163
+1164  Relating to your own work process with fear and loathing (even in the displaced, ironic way
+1165  suggested by hanging up Dilbert cartoons) should therefore be regarded in itself as a sign that the
+1166  process has failed. Joy, humor, and playfulness are indeed assets; it was not mainly for the
+1167  alliteration that I wrote of "happy hordes" above, and it is no mere joke that the Linux mascot is a
+1168  cuddly, neotenous penguin.
+1169
+1170  It may well turn out that one of the most important effects of open source's success will be to
+1171  teach us that play is the most economically efficient mode of creative work.
+1172
+1173  = Epilog: Netscape Embraces the Bazaar =
+1174
+1175  It's a strange feeling to realize you're helping make history....
+1176
+1177  On January 22 1998, approximately seven months after I first published The Cathedral and the Bazaar,
+1178  Netscape Communications, Inc. announced plans to give away the source for Netscape Communicator. I
+1179  had had no clue this was going to happen before the day of the announcement.
+1180
+1181  Eric Hahn, executive vice president and chief technology officer at Netscape, emailed me shortly
+1182  afterwards as follows: "On behalf of everyone at Netscape, I want to thank you for helping us get to
+1183  this point in the first place. Your thinking and writings were fundamental inspirations to our
+1184  decision."
+1185
+1186  The following week I flew out to Silicon Valley at Netscape's invitation for a day-long strategy
+1187  conference (on 4 Feb 1998) with some of their top executives and technical people. We designed
+1188  Netscape's source-release strategy and license together.
+1189
+1190  A few days later I wrote the following:
+1191
+1192      * Netscape is about to provide us with a large-scale, real-world test of the bazaar model in the
+1193        commercial world. The open-source culture now faces a danger; if Netscape's execution doesn't work,
+1194        the open-source concept may be so discredited that the commercial world won't touch it again for
+1195        another decade.
+1196
+1197      * On the other hand, this is also a spectacular opportunity. Initial reaction to the move on Wall
+1198        Street and elsewhere has been cautiously positive. We're being given a chance to prove ourselves,
+1199        too. If Netscape regains substantial market share through this move, it just may set off a
+1200        long-overdue revolution in the software industry.
+1201
+1202      * The next year should be a very instructive and interesting time.
+1203
+1204  And indeed it was. As I write in mid-2000, the development of what was later named Mozilla has been
+1205  only a qualified success. It achieved Netscape's original goal, which was to deny Microsoft a
+1206  monopoly lock on the browser market. It has also achieved some dramatic successes (notably the
+1207  release of the next-generation Gecko rendering engine).
+1208
+1209  However, it has not yet garnered the massive development effort from outside Netscape that the
+1210  Mozilla founders had originally hoped for. The problem here seems to be that for a long time the
+1211  Mozilla distribution actually broke one of the basic rules of the bazaar model; it didn't ship with
+1212  something potential contributors could easily run and see working. (Until more than a year after
+1213  release, building Mozilla from source required a license for the proprietary Motif library.)
+1214
+1215  Most negatively (from the point of view of the outside world) the Mozilla group didn't ship a
+1216  production-quality browser for two and a half years after the project launch—and in 1999 one of the
+1217  project's principals caused a bit of a sensation by resigning, complaining of poor management and
+1218  missed opportunities. "Open source," he correctly observed, "is not magic pixie dust."
+1219
+1220  And indeed it is not. The long-term prognosis for Mozilla looks dramatically better now (in November
+1221  2000) than it did at the time of Jamie Zawinski's resignation letter—in the last few weeks the
+1222  nightly releases have finally passed the critical threshold to production usability. But Jamie was
+1223  right to point out that going open will not necessarily save an existing project that suffers from
+1224  ill-defined goals or spaghetti code or any of the software engineering's other chronic ills. Mozilla
+1225  has managed to provide an example simultaneously of how open source can succeed and how it could
+1226  fail.
+1227
+1228  In the mean time, however, the open-source idea has scored successes and found backers elsewhere.
+1229  Since the Netscape release we've seen a tremendous explosion of interest in the open-source
+1230  development model, a trend both driven by and driving the continuing success of the Linux operating
+1231  system. The trend Mozilla touched off is continuing at an accelerating rate.
+1232
+1233  = Notes =
+1234
+1235  [JB] In Programing Pearls, the noted computer-science aphorist Jon Bentley comments on Brooks's
+1236  observation with "If you plan to throw one away, you will throw away two.". He is almost certainly
+1237  right. The point of Brooks's observation, and Bentley's, isn't merely that you should expect first
+1238  attempt to be wrong, it's that starting over with the right idea is usually more effective than
+1239  trying to salvage a mess.
+1240
+1241  [QR] Examples of successful open-source, bazaar development predating the Internet explosion and
+1242  unrelated to the Unix and Internet traditions have existed. The development of the info-Zip
+1243  compression utility during 1990–x1992, primarily for DOS machines, was one such example. Another was
+1244  the RBBS bulletin board system (again for DOS), which began in 1983 and developed a sufficiently
+1245  strong community that there have been fairly regular releases up to the present (mid-1999) despite
+1246  the huge technical advantages of Internet mail and file-sharing over local BBSs. While the info-Zip
+1247  community relied to some extent on Internet mail, the RBBS developer culture was actually able to
+1248  base a substantial on-line community on RBBS that was completely independent of the TCP/IP
+1249  infrastructure.
+1250
+1251  [CV] That transparency and peer review are valuable for taming the complexity of OS development
+1252  turns out, after all, not to be a new concept. In 1965, very early in the history of time-sharing
+1253  operating systems, Corbató and Vyssotsky, co-designers of the Multics operating system, wrote
+1254
+1255  It is expected that the Multics system will be published when it is operating substantially...
+1256  Such publication is desirable for two reasons: First, the system should withstand public scrutiny
+1257  and criticism volunteered by interested readers; second, in an age of increasing complexity, it is
+1258  an obligation to present and future system designers to make the inner operating system as lucid as
+1259  possible so as to reveal the basic system issues.
+1260
+1261  [JH] John Hasler has suggested an interesting explanation for the fact that duplication of effort
+1262  doesn't seem to be a net drag on open-source development. He proposes what I'll dub "Hasler's Law":
+1263  the costs of duplicated work tend to scale sub-qadratically with team size—that is, more slowly than
+1264  the planning and management overhead that would be needed to eliminate them.
+1265
+1266  This claim actually does not contradict Brooks's Law. It may be the case that total complexity
+1267  overhead and vulnerability to bugs scales with the square of team size, but that the costs from
+1268  duplicated work are nevertheless a special case that scales more slowly. It's not hard to develop
+1269  plausible reasons for this, starting with the undoubted fact that it is much easier to agree on
+1270  functional boundaries between different developers' code that will prevent duplication of effort
+1271  than it is to prevent the kinds of unplanned bad interactions across the whole system that underly
+1272  most bugs.
+1273
+1274  The combination of Linus's Law and Hasler's Law suggests that there are actually three critical size
+1275  regimes in software projects. On small projects (I would say one to at most three developers) no
+1276  management structure more elaborate than picking a lead programmer is needed. And there is some
+1277  intermediate range above that in which the cost of traditional management is relatively low, so its
+1278  benefits from avoiding duplication of effort, bug-tracking, and pushing to see that details are not
+1279  overlooked actually net out positive.
+1280
+1281  Above that, however, the combination of Linus's Law and Hasler's Law suggests there is a
+1282  large-project range in which the costs and problems of traditional management rise much faster than
+1283  the expected cost from duplication of effort. Not the least of these costs is a structural inability
+1284  to harness the many-eyeballs effect, which (as we've seen) seems to do a much better job than
+1285  traditional management at making sure bugs and details are not overlooked. Thus, in the
+1286  large-project case, the combination of these laws effectively drives the net payoff of traditional
+1287  management to zero.
+1288
+1289  [HBS] The split between Linux's experimental and stable versions has another function related to,
+1290  but distinct from, hedging risk. The split attacks another problem: the deadliness of deadlines.
+1291  When programmers are held both to an immutable feature list and a fixed drop-dead date, quality goes
+1292  out the window and there is likely a colossal mess in the making. I am indebted to Marco Iansiti and
+1293  Alan MacCormack of the Harvard Business School for showing me me evidence that relaxing either one
+1294  of these constraints can make scheduling workable.
+1295
+1296  One way to do this is to fix the deadline but leave the feature list flexible, allowing features to
+1297  drop off if not completed by deadline. This is essentially the strategy of the "stable" kernel
+1298  branch; Alan Cox (the stable-kernel maintainer) puts out releases at fairly regular intervals, but
+1299  makes no guarantees about when particular bugs will be fixed or what features will beback-ported
+1300  from the experimental branch.
+1301
+1302  The other way to do this is to set a desired feature list and deliver only when it is done. This is
+1303  essentially the strategy of the "experimental" kernel branch. De Marco and Lister cited research
+1304  showing that this scheduling policy ("wake me up when it's done") produces not only the highest
+1305  quality but, on average, shorter delivery times than either "realistic" or "aggressive" scheduling.
+1306
+1307  I have come to suspect (as of early 2000) that in earlier versions of this essay I severely
+1308  underestimated the importance of the "wake me up when it's done" anti-deadline policy to the
+1309  open-source community's productivity and quality. General experience with the rushed GNOME 1.0
+1310  release in 1999 suggests that pressure for a premature release can neutralize many of the quality
+1311  benefits open source normally confers.
+1312
+1313  It may well turn out to be that the process transparency of open source is one of three co-equal
+1314  drivers of its quality, along with "wake me up when it's done" scheduling and developer
+1315  self-selection.
+1316
+1317  [SU] It's tempting, and not entirely inaccurate, to see the core-plus-halo organization
+1318  characteristic of open-source projects as an Internet-enabled spin on Brooks's own recommendation
+1319  for solving the N-squared complexity problem, the "surgical-team" organization—but the differences
+1320  are significant. The constellation of specialist roles such as "code librarian" that Brooks
+1321  envisioned around the team leader doesn't really exist; those roles are executed instead by
+1322  generalists aided by toolsets quite a bit more powerful than those of Brooks's day. Also, the
+1323  open-source culture leans heavily on strong Unix traditions of modularity, APIs, and information
+1324  hiding—none of which were elements of Brooks's prescription.
+1325
+1326  [RJ] The respondent who pointed out to me the effect of widely varying trace path lengths on the
+1327  difficulty of characterizing a bug speculated that trace-path difficulty for multiple symptoms of
+1328  the same bug varies "exponentially" (which I take to mean on a Gaussian or Poisson distribution, and
+1329  agree seems very plausible). If it is experimentally possible to get a handle on the shape of this
+1330  distribution, that would be extremely valuable data. Large departures from a flat equal-probability
+1331  distribution of trace difficulty would suggest that even solo developers should emulate the bazaar
+1332  strategy by bounding the time they spend on tracing a given symptom before they switch to another.
+1333  Persistence may not always be a virtue...
+1334
+1335  [IN] An issue related to whether one can start projects from zero in the bazaar style is whether the
+1336  bazaar style is capable of supporting truly innovative work. Some claim that, lacking strong
+1337  leadership, the bazaar can only handle the cloning and improvement of ideas already present at the
+1338  engineering state of the art, but is unable to push the state of the art. This argument was perhaps
+1339  most infamously made by the Halloween Documents, two embarrassing internal Microsoft memoranda
+1340  written about the open-source phenomenon. The authors compared Linux's development of a Unix-like
+1341  operating system to "chasing taillights", and opined "(once a project has achieved "parity" with the
+1342  state-of-the-art), the level of management necessary to push towards new frontiers becomes massive."
+1343
+1344  There are serious errors of fact implied in this argument. One is exposed when the Halloween authors
+1345  themseselves later observe that "often [...] new research ideas are first implemented and available
+1346  on Linux before they are available / incorporated into other platforms."
+1347
+1348  If we read "open source" for "Linux", we see that this is far from a new phenomenon. Historically,
+1349  the open-source community did not invent Emacs or the World Wide Web or the Internet itself by
+1350  chasing taillights or being massively managed—and in the present, there is so much innovative work
+1351  going on in open source that one is spoiled for choice. The GNOME project (to pick one of many) is
+1352  pushing the state of the art in GUIs and object technology hard enough to have attracted
+1353  considerable notice in the computer trade press well outside the Linux community. Other examples are
+1354  legion, as a visit to Freshmeat on any given day will quickly prove.
+1355
+1356  But there is a more fundamental error in the implicit assumption that the cathedral model (or the
+1357  bazaar model, or any other kind of management structure) can somehow make innovation happen
+1358  reliably. This is nonsense. Gangs don't have breakthrough insights—even volunteer groups of bazaar
+1359  anarchists are usually incapable of genuine originality, let alone corporate committees of people
+1360  with a survival stake in some status quo ante. Insight comes from individuals. The most their
+1361  surrounding social machinery can ever hope to do is to be responsive to breakthrough insights—to
+1362  nourish and reward and rigorously test them instead of squashing them.
+1363
+1364  Some will characterize this as a romantic view, a reversion to outmoded lone-inventor stereotypes.
+1365  Not so; I am not asserting that groups are incapable of developing breakthrough insights once they
+1366  have been hatched; indeed, we learn from the peer-review process that such development groups are
+1367  essential to producing a high-quality result. Rather I am pointing out that every such group
+1368  development starts from—is necessarily sparked by—one good idea in one person's head.  Cathedrals
+1369  and bazaars and other social structures can catch that lightning and refine it, but they cannot make
+1370  it on demand.
+1371
+1372  Therefore the root problem of innovation (in software, or anywhere else) is indeed how not to squash
+1373  it—but, even more fundamentally, it is how to grow lots of people who can have insights in the first
+1374  place.
+1375
+1376  To suppose that cathedral-style development could manage this trick but the low entry barriers and
+1377  process fluidity of the bazaar cannot would be absurd. If what it takes is one person with one good
+1378  idea, then a social milieu in which one person can rapidly attract the cooperation of hundreds or
+1379  thousands of others with that good idea is going inevitably to out-innovate any in which the person
+1380  has to do a political sales job to a hierarchy before he can work on his idea without risk of
+1381  getting fired.
+1382
+1383  And, indeed, if we look at the history of software innovation by organizations using the cathedral
+1384  model, we quickly find it is rather rare. Large corporations rely on university research for new
+1385  ideas (thus the Halloween Documents authors' unease about Linux's facility at coopting that research
+1386  more rapidly). Or they buy out small companies built around some innovator's brain. In neither case
+1387  is the innovation native to the cathedral culture; indeed, many innovations so imported end up being
+1388  quietly suffocated under the "massive level of management" the Halloween Documents' authors so
+1389  extol.
+1390
+1391  That, however, is a negative point. The reader would be better served by a positive one. I suggest,
+1392  as an experiment, the following:
+1393
+1394      * Pick a criterion for originality that you believe you can apply consistently. If your definition
+1395        is "I know it when I see it", that's not a problem for purposes of this test.
+1396
+1397      * Pick any closed-source operating system competing with Linux, and a best source for accounts of
+1398        current development work on it.
+1399
+1400      * Watch that source and Freshmeat for one month. Every day, count the number of release
+1401        announcements on Freshmeat that you consider 'original' work. Apply the same definition of
+1402        'original' to announcements for that other OS and count them.
+1403
+1404      * Thirty days later, total up both figures.
+1405
+1406  The day I wrote this, Freshmeat carried twenty-two release announcements, of which three appear they
+1407  might push state of the art in some respect, This was a slow day for Freshmeat, but I will be
+1408  astonished if any reader reports as many as three likely innovations a month in any closed-source
+1409  channel.
+1410
+1411  [EGCS] We now have history on a project that, in several ways, may provide a more indicative test of
+1412  the bazaar premise than fetchmail; EGCS, the Experimental GNU Compiler System.
+1413
+1414  This project was announced in mid-August of 1997 as a conscious attempt to apply the ideas in the
+1415  early public versions of The Cathedral and the Bazaar. The project founders felt that the
+1416  development of GCC, the Gnu C Compiler, had been stagnating. For about twenty months afterwards, GCC
+1417  and EGCS continued as parallel products—both drawing from the same Internet developer population,
+1418  both starting from the same GCC source base, both using pretty much the same Unix toolsets and
+1419  development environment. The projects differed only in that EGCS consciously tried to apply the
+1420  bazaar tactics I have previously described, while GCC retained a more cathedral-like organization
+1421  with a closed developer group and infrequent releases.
+1422
+1423  This was about as close to a controlled experiment as one could ask for, and the results were
+1424  dramatic. Within months, the EGCS versions had pulled substantially ahead in features; better
+1425  optimization, better support for FORTRAN and C++.  Many people found the EGCS development snapshots
+1426  to be more reliable than the most recent stable version of GCC, and major Linux distributions began
+1427  to switch to EGCS.
+1428
+1429  In April of 1999, the Free Software Foundation (the official sponsors of GCC) dissolved the original
+1430  GCC development group and officially handed control of the project to the the EGCS steering team.
+1431
+1432  [SP] Of course, Kropotkin's critique and Linus's Law raise some wider issues about the cybernetics
+1433  of social organizations. Another folk theorem of software engineering suggests one of them; Conway's
+1434  Law—commonly stated as "If you have four groups working on a compiler, you'll get a 4-pass
+1435  compiler". The original statement was more general: "Organizations which design systems are
+1436  constrained to produce designs which are copies of the communication structures of these
+1437  organizations." We might put it more succinctly as "The means determine the ends", or even "Process
+1438  becomes product".
+1439
+1440  It is accordingly worth noting that in the open-source community organizational form and function
+1441  match on many levels.  The network is everything and everywhere: not just the Internet, but the
+1442  people doing the work form a distributed, loosely coupled, peer-to-peer network that provides
+1443  multiple redundancy and degrades very gracefully. In both networks, each node is important only to
+1444  the extent that other nodes want to cooperate with it.
+1445
+1446  The peer-to-peer part is essential to the community's astonishing productivity. The point Kropotkin
+1447  was trying to make about power relationships is developed further by the 'SNAFU Principle': "True
+1448  communication is possible only between equals, because inferiors are more consistently rewarded for
+1449  telling their superiors pleasant lies than for telling the truth." Creative teamwork utterly depends
+1450  on true communication and is thus very seriously hindered by the presence of power relationships.
+1451  The open-source community, effectively free of such power relationships, is teaching us by contrast
+1452  how dreadfully much they cost in bugs, in lowered productivity, and in lost opportunities.
+1453
+1454  Further, the SNAFU principle predicts in authoritarian organizations a progressive disconnect
+1455  between decision-makers and reality, as more and more of the input to those who decide tends to
+1456  become pleasant lies. The way this plays out in conventional software development is easy to see;
+1457  there are strong incentives for the inferiors to hide, ignore, and minimize problems. When this
+1458  process becomes product, software is a disaster.
+1459
+1460  = Bibliography =
+1461
+1462  I quoted several bits from Frederick P. Brooks's classic The Mythical Man-Month because, in many
+1463  respects, his insights have yet to be improved upon. I heartily recommend the 25th Anniversary
+1464  edition from Addison-Wesley (ISBN 0-201-83595-9), which adds his 1986 "No Silver Bullet" paper.
+1465
+1466  The new edition is wrapped up by an invaluable 20-years-later retrospective in which Brooks
+1467  forthrightly admits to the few judgements in the original text which have not stood the test of
+1468  time. I first read the retrospective after the first public version of this essay was substantially
+1469  complete, and was surprised to discover that Brooks attributed bazaar-like practices to Microsoft!
+1470  (In fact, however, this attribution turned out to be mistaken. In 1998 we learned from the Halloween
+1471  Documents that Microsoft's internal developer community is heavily balkanized, with the kind of
+1472  general source access needed to support a bazaar not even truly possible.)
+1473
+1474  Gerald M. Weinberg's The Psychology Of Computer Programming (New York, Van Nostrand Reinhold 1971)
+1475  introduced the rather unfortunately-labeled concept of "egoless programming". While he was nowhere
+1476  near the first person to realize the futility of the "principle of command", he was probably the
+1477  first to recognize and argue the point in particular connection with software development.
+1478
+1479  Richard P. Gabriel, contemplating the Unix culture of the pre-Linux era, reluctantly argued for the
+1480  superiority of a primitive bazaar-like model in his 1989 paper "LISP: Good News, Bad News, and How
+1481  To Win Big". Though dated in some respects, this essay is still rightly celebrated among LISP fans
+1482  (including me). A correspondent reminded me that the section titled "Worse Is Better" reads almost
+1483  as an anticipation of Linux. The paper is accessible on the World Wide Web at
+1484  http://www.naggum.no/worse-is-better.html.
+1485
+1486  De Marco and Lister's Peopleware: Productive Projects and Teams (New York; Dorset House, 1987; ISBN
+1487  0-932633-05-6) is an underappreciated gem which I was delighted to see Fred Brooks cite in his
+1488  retrospective. While little of what the authors have to say is directly applicable to the Linux or
+1489  open-source communities, the authors' insight into the conditions necessary for creative work is
+1490  acute and worthwhile for anyone attempting to import some of the bazaar model's virtues into a
+1491  commercial context.
+1492
+1493  Finally, I must admit that I very nearly called this essay "The Cathedral and the Agora", the latter
+1494  term being the Greek for an open market or public meeting place. The seminal "agoric systems" papers
+1495  by Mark Miller and Eric Drexler, by describing the emergent properties of market-like computational
+1496  ecologies, helped prepare me to think clearly about analogous phenomena in the open-source culture
+1497  when Linux rubbed my nose in them five years later. These papers are available on the Web at
+1498  http://www.agorics.com/agorpapers.html.
+1499
+1500  = Acknowledgements =
+1501
+1502  This essay was improved by conversations with a large number of people who helped debug it.
+1503  Particular thanks to Jeff Dutky <dutky@wam.umd.edu>, who suggested the "debugging is parallelizable"
+1504  formulation, and helped develop the analysis that proceeds from it. Also to Nancy Lebovitz
+1505  <nancyl@universe.digex.net> for her suggestion that I emulate Weinberg by quoting Kropotkin.
+1506  Perceptive criticisms also came from Joan Eslinger <wombat@kilimanjaro.engr.sgi.com> and Marty Franz
+1507  <marty@net-link.net> of the General Technics list. Glen Vandenburg <glv@vanderburg.org> pointeed out
+1508  the importance of self-selection in contributor populations and suggested the fruitful idea that
+1509  much development rectifies 'bugs of omission'; Daniel Upper <upper@peak.org> suggested the natural
+1510  analogies for this. I'm grateful to the members of PLUG, the Philadelphia Linux User's group, for
+1511  providing the first test audience for the first public version of this essay.  Paula Matuszek
+1512  <matusp00@mh.us.sbphrd.com> enlightened me about the practice of software management. Phil Hudson
+1513  <phil.hudson@iname.com> reminded me that the social organization of the hacker culture mirrors the
+1514  organization of its software, and vice-versa. John Buck <johnbuck@sea.ece.umassd.edu> pointed out
+1515  that MATLAB makes an instructive parallel to Emacs. Russell Johnston <russjj@mail.com> brought me to
+1516  consciousness about some of the mechanisms discussed in "How Many Eyeballs Tame Complexity."
+1517  Finally, Linus Torvalds's comments were helpful and his early endorsement very encouraging.

@@ -31,5 +31,43 @@
 31    agents, and conclude with some exploration of the implications of this insight for the future of
 32    software.
 33
+34    = The Cathedral and the Bazaar =
+35
+36    Linux is subversive. Who would have thought even five years ago (1991) that a world-class operating
+37    system could coalesce as if by magic out of part-time hacking by several thousand developers
+38    scattered all over the planet, connected only by the tenuous strands of the Internet?
+39
+40    Certainly not I. By the time Linux swam onto my radar screen in early 1993, I had already been
+41    involved in Unix and open-source development for ten years. I was one of the first GNU contributors
+42    in the mid-1980s. I had released a good deal of open-source software onto the net, developing or
+43    co-developing several programs (nethack, Emacs's VC and GUD modes, xlife, and others) that are still
+44    in wide use today. I thought I knew how it was done.
+45
+46    Linux overturned much of what I thought I knew. I had been preaching the Unix gospel of small tools,
+47    rapid prototyping and evolutionary programming for years. But I also believed there was a certain
+48    critical complexity above which a more centralized, a priori approach was required. I believed that
+49    the most important software (operating systems and really large tools like the Emacs programming
+50    editor) needed to be built like cathedrals, carefully crafted by individual wizards or small bands
+51    of mages working in splendid isolation, with no beta to be released before its time.
+52
+53    Linus Torvalds's style of development—release early and often, delegate everything you can, be open
+54    to the point of promiscuity—came as a surprise. No quiet, reverent cathedral-building here—rather,
+55    the Linux community seemed to resemble a great babbling bazaar of differing agendas and approaches
+56    (aptly symbolized by the Linux archive sites, who'd take submissions from anyone) out of which a
+57    coherent and stable system could seemingly emerge only by a succession of miracles.
+58
+59
+60    learned my way around, I worked hard not just at individual projects, but also at trying to
+61    understand why the Linux world not only didn't fly apart in confusion but seemed to go from strength
+62    to strength at a speed barely imaginable to cathedral-builders.
+63
+64    By mid-1996 I thought I was beginning to understand. Chance handed me a perfect way to test my
+65    theory, in the form of an open-source project that I could consciously try to run in the bazaar
+66    style. So I did—and it was a significant success.
+67
+68    This is the story of that project. I'll use it to propose some aphorisms about effective open-source
+69    development. Not all of these are things I first learned in the Linux world, but we'll see how the
+70    Linux world gives them particular point. If I'm correct, they'll help you understand exactly what it
+71    is that makes the Linux community such a fountain of good software—and, perhaps, they will help you
+72    become more productive yourself.
 73
-74    = The Mail Must Get Through =

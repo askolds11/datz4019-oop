@@ -134,3 +134,276 @@
 372   is available makes both more attractive. [HBS]
 373
 374   = How Many Eyeballs Tame Complexity =
+375
+376   It's one thing to observe in the large that the bazaar style greatly accelerates debugging and code
+377   evolution. It's another to understand exactly how and why it does so at the micro-level of
+378   day-to-day developer and tester behavior. In this section (written three years after the original
+379   paper, using insights by developers who read it and re-examined their own behavior) we'll take a
+380   hard look at the actual mechanisms. Non-technically inclined readers can safely skip to the next
+381   section.
+382
+383   One key to understanding is to realize exactly why it is that the kind of bug report
+384   non–source-aware users normally turn in tends not to be very useful. Non–source-aware users tend to
+385   report only surface symptoms; they take their environment for granted, so they (a) omit critical
+386   background data, and (b) seldom include a reliable recipe for reproducing the bug.
+387
+388   The underlying problem here is a mismatch between the tester's and the developer's mental models of
+389   the program; the tester, on the outside looking in, and the developer on the inside looking out. In
+390   closed-source development they're both stuck in these roles, and tend to talk past each other and
+391   find each other deeply frustrating.
+392
+393   Open-source development breaks this bind, making it far easier for tester and developer to develop a
+394   shared representation grounded in the actual source code and to communicate effectively about it.
+395   Practically, there is a huge difference in leverage for the developer between the kind of bug report
+396   that just reports externally-visible symptoms and the kind that hooks directly to the developer's
+397   source-code–based mental representation of the program.
+398
+399   Most bugs, most of the time, are easily nailed given even an incomplete but suggestive
+400   characterization of their error conditions at source-code level. When someone among your
+401   beta-testers can point out, "there's a boundary problem in line nnn", or even just "under conditions
+402   X, Y, and Z, this variable rolls over", a quick look at the offending code often suffices to pin
+403   down the exact mode of failure and generate a fix.
+404
+405   Thus, source-code awareness by both parties greatly enhances both good communication and the synergy
+406   between what a beta-tester reports and what the core developer(s) know. In turn, this means that the
+407   core developers' time tends to be well conserved, even with many collaborators.
+408
+409   Another characteristic of the open-source method that conserves developer time is the communication
+410   structure of typical open-source projects. Above I used the term "core developer"; this reflects a
+411   distinction between the project core (typically quite small; a single core developer is common, and
+412   one to three is typical) and the project halo of beta-testers and available contributors (which
+413   often numbers in the hundreds).
+414
+415   The fundamental problem that traditional software-development organization addresses is Brook's Law:
+416   "Adding more programmers to a late project makes it later." More generally, Brooks's Law predicts
+417   that the complexity and communication costs of a project rise with the square of the number of
+418   developers, while work done only rises linearly.
+419
+420   Brooks's Law is founded on experience that bugs tend strongly to cluster at the interfaces between
+421   code written by different people, and that communications/coordination overhead on a project tends
+422   to rise with the number of interfaces between human beings. Thus, problems scale with the number of
+423   communications paths between developers, which scales as the square of the humber of developers
+424   (more precisely, according to the formula N*(N - 1)/2 where N is the number of developers).
+425
+426   The Brooks's Law analysis (and the resulting fear of large numbers in development groups) rests on a
+427   hidden assummption: that the communications structure of the project is necessarily a complete
+428   graph, that everybody talks to everybody else. But on open-source projects, the halo developers work
+429   on what are in effect separable parallel subtasks and interact with each other very little; code
+430   changes and bug reports stream through the core group, and only within that small core group do we
+431   pay the full Brooksian overhead. [SU]
+432
+433   There are are still more reasons that source-code–level bug reporting tends to be very efficient.
+434   They center around the fact that a single error can often have multiple possible symptoms,
+435   manifesting differently depending on details of the user's usage pattern and environment. Such
+436   errors tend to be exactly the sort of complex and subtle bugs (such as dynamic-memory-management
+437   errors or nondeterministic interrupt-window artifacts) that are hardest to reproduce at will or to
+438   pin down by static analysis, and which do the most to create long-term problems in software.
+439
+440   A tester who sends in a tentative source-code–level characterization of such a multi-symptom bug
+441   (e.g. "It looks to me like there's a window in the signal handling near line 1250" or "Where are you
+442   zeroing that buffer?") may give a developer, otherwise too close to the code to see it, the critical
+443   clue to a half-dozen disparate symptoms. In cases like this, it may be hard or even impossible to
+444   know which externally-visible misbehaviour was caused by precisely which bug—but with frequent
+445   releases, it's unnecessary to know. Other collaborators will be likely to find out quickly whether
+446   their bug has been fixed or not. In many cases, source-level bug reports will cause misbehaviours to
+447   drop out without ever having been attributed to any specific fix.
+448
+449   Complex multi-symptom errors also tend to have multiple trace paths from surface symptoms back to
+450   the actual bug. Which of the trace paths a given developer or tester can chase may depend on
+451   subtleties of that person's environment, and may well change in a not obviously deterministic way
+452   over time. In effect, each developer and tester samples a semi-random set of the program's state
+453   space when looking for the etiology of a symptom. The more subtle and complex the bug, the less
+454   likely that skill will be able to guarantee the relevance of that sample.
+455
+456   For simple and easily reproducible bugs, then, the accent will be on the "semi" rather than the
+457   "random"; debugging skill and intimacy with the code and its architecture will matter a lot. But for
+458   complex bugs, the accent will be on the "random". Under these circumstances many people running
+459   traces will be much more effective than a few people running traces sequentially—even if the few
+460   have a much higher average skill level.
+461
+462   This effect will be greatly amplified if the difficulty of following trace paths from different
+463   surface symptoms back to a bug varies significantly in a way that can't be predicted by looking at
+464   the symptoms. A single developer sampling those paths sequentially will be as likely to pick a
+465   difficult trace path on the first try as an easy one. On the other hand, suppose many people are
+466   trying trace paths in parallel while doing rapid releases. Then it is likely one of them will find
+467   the easiest path immediately, and nail the bug in a much shorter time. The project maintainer will
+468   see that, ship a new release, and the other people running traces on the same bug will be able to
+469   stop before having spent too much time on their more difficult traces [RJ].
+470
+471   = When Is a Rose Not a Rose? =
+472
+473   Having studied Linus's behavior and formed a theory about why it was successful, I made a conscious
+474   decision to test this theory on my new (admittedly much less complex and ambitious) project.
+475
+476   But the first thing I did was reorganize and simplify popclient a lot. Carl Harris's implementation
+477   was very sound, but exhibited a kind of unnecessary complexity common to many C programmers. He
+478   treated the code as central and the data structures as support for the code. As a result, the code
+479   was beautiful but the data structure design ad-hoc and rather ugly (at least by the high standards
+480   of this veteran LISP hacker).
+481
+482   I had another purpose for rewriting besides improving the code and the data structure design,
+483   however. That was to evolve it into something I understood completely. It's no fun to be responsible
+484   for fixing bugs in a program you don't understand.
+485
+486   For the first month or so, then, I was simply following out the implications of Carl's basic design.
+487   The first serious change I made was to add IMAP support. I did this by reorganizing the protocol
+488   machines into a generic driver and three method tables (for POP2, POP3, and IMAP). This and the
+489   previous changes illustrate a general principle that's good for programmers to keep in mind,
+490   especially in languages like C that don't naturally do dynamic typing:
+491
+492       9. Smart data structures and dumb code works a lot better than the other way around.
+493
+494   Brooks, Chapter 9: "Show me your flowchart and conceal your tables, and I shall continue to be
+495   mystified. Show me your tables, and I won't usually need your flowchart; it'll be obvious." Allowing
+496   for thirty years of terminological/cultural shift, it's the same point.
+497
+498   At this point (early September 1996, about six weeks from zero) I started thinking that a name
+499   change might be in order—after all, it wasn't just a POP client any more. But I hesitated, because
+500   there was as yet nothing genuinely new in the design. My version of popclient had yet to develop an
+501   identity of its own.
+502
+503   That changed, radically, when popclient learned how to forward fetched mail to the SMTP port. I'll
+504   get to that in a moment. But first: I said earlier that I'd decided to use this project to test my
+505   theory about what Linus Torvalds had done right. How (you may well ask) did I do that? In these
+506   ways:
+507
+508       * I released early and often (almost never less often than every ten days; during periods of
+509         intense development, once a day).
+510
+511       * I grew my beta list by adding to it everyone who contacted me about fetchmail.
+512
+513       * I sent chatty announcements to the beta list whenever I released, encouraging people to
+514         participate.
+515
+516       * And I listened to my beta-testers, polling them about design decisions and stroking them
+517         whenever they sent in patches and feedback.
+518
+519   The payoff from these simple measures was immediate. From the beginning of the project, I got bug
+520   reports of a quality most developers would kill for, often with good fixes attached. I got
+521   thoughtful criticism, I got fan mail, I got intelligent feature suggestions. Which leads to:
+522
+523       10. If you treat your beta-testers as if they're your most valuable resource, they will respond
+524           by becoming your most valuable resource.
+525
+526   One interesting measure of fetchmail's success is the sheer size of the project beta list,
+527   fetchmail-friends. At the time of latest revision of this paper (November 2000) it has 287 members
+528   and is adding two or three a week.
+529
+530   Actually, when I revised in late May 1997 I found the list was beginning to lose members from its
+531   high of close to 300 for an interesting reason. Several people have asked me to unsubscribe them
+532   because fetchmail is working so well for them that they no longer need to see the list traffic!
+533   Perhaps this is part of the normal life-cycle of a mature bazaar-style project.
+534
+535   = Popclient becomes Fetchmail =
+536
+537   The real turning point in the project was when Harry Hochheiser sent me his scratch code for
+538   forwarding mail to the client machine's SMTP port. I realized almost immediately that a reliable
+539   implementation of this feature would make all the other mail delivery modes next to obsolete.
+540
+541   For many weeks I had been tweaking fetchmail rather incrementally while feeling like the interface
+542   design was serviceable but grubby—inelegant and with too many exiguous options hanging out all over.
+543   The options to dump fetched mail to a mailbox file or standard output particularly bothered me, but
+544   I couldn't figure out why.
+545
+546   (If you don't care about the technicalia of Internet mail, the next two paragraphs can be safely
+547   skipped.)
+548
+549   What I saw when I thought about SMTP forwarding was that popclient had been trying to do too many
+550   things. It had been designed to be both a mail transport agent (MTA) and a local delivery agent
+551   (MDA). With SMTP forwarding, it could get out of the MDA business and be a pure MTA, handing off
+552   mail to other programs for local delivery just as sendmail does.
+553
+554   Why mess with all the complexity of configuring a mail delivery agent or setting up lock-and-append
+555   on a mailbox when port 25 is almost guaranteed to be there on any platform with TCP/IP support in
+556   the first place? Especially when this means retrieved mail is guaranteed to look like normal
+557   sender-initiated SMTP mail, which is really what we want anyway.
+558
+559   (Back to a higher level....)
+560
+561   Even if you didn't follow the preceding technical jargon, there are several important lessons here.
+562   First, this SMTP-forwarding concept was the biggest single payoff I got from consciously trying to
+563   emulate Linus's methods. A user gave me this terrific idea—all I had to do was understand the
+564   implications.
+565
+566       11. The next best thing to having good ideas is recognizing good ideas from your users.
+567           Sometimes the latter is better.
+568
+569   Interestingly enough, you will quickly find that if you are completely and self-deprecatingly
+570   truthful about how much you owe other people, the world at large will treat you as though you did
+571   every bit of the invention yourself and are just being becomingly modest about your innate genius.
+572   We can all see how well this worked for Linus!
+573
+574   (When I gave my talk at the first Perl Conference in August 1997, hacker extraordinaire Larry Wall
+575   was in the front row.  As I got to the last line above he called out, religious-revival style, "Tell
+576   it, tell it, brother!". The whole audience laughed, because they knew this had worked for the
+577   inventor of Perl, too.)
+578
+579   After a very few weeks of running the project in the same spirit, I began to get similar praise not
+580   just from my users but from other people to whom the word leaked out. I stashed away some of that
+581   email; I'll look at it again sometime if I ever start wondering whether my life has been worthwhile
+582   :-).
+583
+584   But there are two more fundamental, non-political lessons here that are general to all kinds of
+585   design.
+586
+587       12. Often, the most striking and innovative solutions come from realizing that your concept of
+588           the problem was wrong.
+589
+590   I had been trying to solve the wrong problem by continuing to develop popclient as a combined
+591   MTA/MDA with all kinds of funky local delivery modes. Fetchmail's design needed to be rethought from
+592   the ground up as a pure MTA, a part of the normal SMTP-speaking Internet mail path.
+593
+594   When you hit a wall in development—when you find yourself hard put to think past the next patch—it's
+595   often time to ask not whether you've got the right answer, but whether you're asking the right
+596   question. Perhaps the problem needs to be reframed.
+597
+598   Well, I had reframed my problem. Clearly, the right thing to do was (1) hack SMTP forwarding support
+599   into the generic driver, (2) make it the default mode, and (3) eventually throw out all the other
+600   delivery modes, especially the deliver-to-file and deliver-to-standard-output options.
+601
+602   I hesitated over step 3 for some time, fearing to upset long-time popclient users dependent on the
+603   alternate delivery mechanisms. In theory, they could immediately switch to .forward files or their
+604   non-sendmail equivalents to get the same effects. In practice the transition might have been messy.
+605
+606   But when I did it, the benefits proved huge. The cruftiest parts of the driver code vanished.
+607   Configuration got radically simpler—no more grovelling around for the system MDA and user's mailbox,
+608   no more worries about whether the underlying OS supports file locking.
+609
+610   Also, the only way to lose mail vanished. If you specified delivery to a file and the disk got full,
+611   your mail got lost.  This can't happen with SMTP forwarding because your SMTP listener won't return
+612   OK unless the message can be delivered or at least spooled for later delivery.
+613
+614   Also, performance improved (though not so you'd notice it in a single run). Another not
+615   insignificant benefit of this change was that the manual page got a lot simpler.
+616
+617   Later, I had to bring delivery via a user-specified local MDA back in order to allow handling of
+618   some obscure situations involving dynamic SLIP. But I found a much simpler way to do it.
+619
+620   The moral? Don't hesitate to throw away superannuated features when you can do it without loss of
+621   effectiveness. Antoine de Saint-Exupéry (who was an aviator and aircraft designer when he wasn't
+622   authoring classic children's books) said:
+623
+624       13. "Perfection (in design) is achieved not when there is nothing more to add, but rather when
+625           there is nothing more to take away."
+626
+627   When your code is getting both better and simpler, that is when you know it's right. And in the
+628   process, the fetchmail design acquired an identity of its own, different from the ancestral
+629   popclient.
+630
+631   It was time for the name change. The new design looked much more like a dual of sendmail than the
+632   old popclient had; both are MTAs, but where sendmail pushes then delivers, the new popclient pulls
+633   then delivers. So, two months off the blocks, I renamed it fetchmail.
+634
+635   There is a more general lesson in this story about how SMTP delivery came to fetchmail. It is not
+636   only debugging that is parallelizable; development and (to a perhaps surprising extent) exploration
+637   of design space is, too. When your development mode is rapidly iterative, development and
+638   enhancement may become special cases of debugging—fixing 'bugs of omission' in the original
+639   capabilities or concept of the software.
+640
+641   Even at a higher level of design, it can be very valuable to have lots of co-developers
+642   random-walking through the design space near your product. Consider the way a puddle of water finds
+643   a drain, or better yet how ants find food: exploration essentially by diffusion, followed by
+644   exploitation mediated by a scalable communication mechanism. This works very well; as with Harry
+645   Hochheiser and me, one of your outriders may well find a huge win nearby that you were just a little
+646   too close-focused to see.
+647

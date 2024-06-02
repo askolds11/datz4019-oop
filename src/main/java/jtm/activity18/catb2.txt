@@ -1,6 +1,22 @@
 74    = The Mail Must Get Through =
 75
-
+76    Since 1993 I'd been running the technical side of a small free-access Internet service provider
+77    called Chester County InterLink (CCIL) in West Chester, Pennsylvania. I co-founded CCIL and wrote
+78    our unique multiuser bulletin-board software—you can check it out by telnetting to locke.ccil.org.
+79    Today it supports almost three thousand users on thirty lines. The job allowed me 24-hour-a-day
+80    access to the net through CCIL's 56K line—in fact, the job practically demanded it!
+81
+82    I had gotten quite used to instant Internet email. I found having to periodically telnet over to
+83    locke to check my mail annoying. What I wanted was for my mail to be delivered on snark (my home
+84    system) so that I would be notified when it arrived and could handle it using all my local tools.
+85
+86    The Internet's native mail forwarding protocol, SMTP (Simple Mail Transfer Protocol), wouldn't suit,
+87    because it works best when machines are connected full-time, while my personal machine isn't always
+88    on the Internet, and doesn't have a static IP address. What I needed was a program that would reach
+89    out over my intermittent dialup connection and pull across my mail to be delivered locally. I knew
+90    such things existed, and that most of them used a simple application protocol called POP (Post
+91    Office Protocol). POP is now widely supported by most common mail clients, but at the time, it
+92    wasn't built in to the mail reader I was using.
 93
 94    I needed a POP3 client. So I went out on the Internet and found one. Actually, I found three or
 95    four. I used one of them for a while, but it was missing what seemed an obvious feature, the ability
@@ -60,7 +76,27 @@
 149   Stay or switch? If I switched, I'd be throwing away the coding I'd already done in exchange for a
 150   better development base.
 151
-
+152   A practical motive to switch was the presence of multiple-protocol support. POP3 is the most
+153   commonly used of the post-office server protocols, but not the only one. Fetchpop and the other
+154   competition didn't do POP2, RPOP, or APOP, and I was already having vague thoughts of perhaps adding
+155   IMAP (Internet Message Access Protocol, the most recently designed and most powerful post-office
+156   protocol) just for fun.
+157
+158   But I had a more theoretical reason to think switching might be as good an idea as well, something I
+159   learned long before Linux.
+160
+161       3. "Plan to throw one away; you will, anyhow." (Fred Brooks, The Mythical Man-Month, Chapter 11)
+162
+163   Or, to put it another way, you often don't really understand the problem until after the first time
+164   you implement a solution. The second time, maybe you know enough to do it right. So if you want to
+165   get it right, be ready to start over at least once [JB].
+166
+167   Well (I told myself) the changes to fetchpop had been my first try. So I switched.
+168
+169   After I sent my first set of popclient patches to Carl Harris on 25 June 1996, I found out that he
+170   had basically lost interest in popclient some time before. The code was a bit dusty, with minor bugs
+171   hanging out. I had many changes to make, and we quickly agreed that the logical thing for me to do
+172   was take over the program.
 173
 174   Without my actually noticing, the project had escalated. No longer was I just contemplating minor
 175   patches to an existing POP client. I took on maintaining an entire one, and there were ideas
@@ -127,4 +163,3 @@
 236   mostly takes place in the open part of the tool where a large and varied community can tinker with
 237   it.
 238
-239   = Release Early, Release Often =
